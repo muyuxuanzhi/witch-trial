@@ -4,7 +4,7 @@ import { PALETTE } from "../engine/Game.js";
 import { Background } from "../systems/Background.js";
 import { Save } from "../systems/Save.js";
 import { getSkin } from "../data/skins.js";
-import { RunScene } from "./RunScene.js";
+import { LevelSelectScene } from "./LevelSelectScene.js";
 import { ShopScene } from "./ShopScene.js";
 
 export class MenuScene extends Scene {
@@ -13,7 +13,7 @@ export class MenuScene extends Scene {
     this.t = 0;
     this.save = Save.load();
     this.bg = new Background(game.width, game.height, getSkin("background", this.save.equipped.background));
-    this.items = ["开始疾跑", "商城"];
+    this.items = ["开始试炼", "商城"];
     this.sel = 0;
   }
 
@@ -28,7 +28,7 @@ export class MenuScene extends Scene {
   }
 
   _activate(i) {
-    if (i === 0) this.game.changeScene(new RunScene(this.game));
+    if (i === 0) this.game.changeScene(new LevelSelectScene(this.game));
     else this.game.changeScene(new ShopScene(this.game));
   }
 
@@ -59,12 +59,12 @@ export class MenuScene extends Scene {
     ctx.shadowColor = PALETTE.neon;
     ctx.shadowBlur = glow;
     ctx.fillStyle = PALETTE.text;
-    ctx.font = "bold 34px monospace";
-    ctx.fillText("霓虹疾跑", W / 2, H * 0.26);
+    ctx.font = "bold 32px monospace";
+    ctx.fillText("魔女试炼", W / 2, H * 0.26);
     ctx.shadowBlur = 0;
     ctx.fillStyle = PALETTE.neon;
-    ctx.font = "11px monospace";
-    ctx.fillText("N E O N   D A S H", W / 2, H * 0.26 + 26);
+ ctx.font = "11px monospace";
+    ctx.fillText("W I T C H   T R I A L", W / 2, H * 0.26 + 26);
 
     const rects = this._itemRects();
     ctx.font = "14px monospace";

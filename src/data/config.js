@@ -23,4 +23,15 @@ export const CONFIG = {
   // 手感
   hitStop: 0.12,         // 碰撞顿帧时长
   shakeOnHit: 6,         // 碰撞屏震强度
+
+  // ===== 魔女试炼 / 肉鸽成长 =====
+  trialPerLevel: 2500,   // 每累积多少试炼值触发一次三选一 Buff
+  starValue: 50,         // 魔法星星的试炼值
+  potionValue: 100,   // 魔法药水的试炼值
+  potionChance: 0.32,    // 收集物中药水的占比（其余为星星）
+
+  // 伤害机制（不再秒死）
+  hitPenalty: 20,        // 撞障碍扣除的试炼值
+  stunTime: 0.55,        // 撞障碍后的僵直时长（秒）
+  hitInvuln: 0.9,     // 受伤后无敌时间（避免连续扣血）
 };
