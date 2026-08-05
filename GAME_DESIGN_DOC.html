@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>魔女试炼 Witch Trial · 游戏策划案</title>
+  <style>
+    :root {
+      --bg-dark: #0d0d1a;
+      --bg-card: #161627;
+      --bg-card-hover: #1c1c35;
+      --accent-purple: #a855f7;
+      --accent-pink: #ec4899;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-yellow: #eab308;
+      --accent-red: #ef4444;
+      --accent-orange: #f97316;
+      --accent-cyan: #06b6d4;
+      --text-primary: #e8e8f0;
+      --text-secondary: #9a9ab0;
+      --text-muted: #6b6b80;
+      --border-color: #2a2a45;
+      --gradient-witch: linear-gradient(135deg, #a855f7, #ec4899, #ffcf5c);
+      --gradient-run: linear-gradient(135deg, #3b82f6, #06b6d4, #22c55e);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: #3a3a55; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
+
+    /* ===== Hero ===== */
+    .hero {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 3.5rem 2rem 2.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background: radial-gradient(ellipse at top, rgba(168,85,247,0.12), transparent 60%);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 940px; }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(168,85,247,0.15);
+      border: 1px solid rgba(168,85,247,0.3);
+      color: var(--accent-purple);
+      padding: 6px 18px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 900;
+      background: var(--gradient-witch);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.6rem;
+      line-height: 1.2;
+    }
+    .hero-en { font-size: 1.1rem; letter-spacing: 6px; color: var(--text-muted); margin-bottom: 1.2rem; text-transform: uppercase; }
+    .hero-tagline {
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      font-weight: 300;
+    }
+    .hero-keywords {
+      display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 2.5rem;
+    }
+    .keyword-tag {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-color);
+      padding: 8px 18px; border-radius: 8px;
+      font-size: 0.9rem; color: var(--text-secondary); transition: all 0.3s;
+    }
+    .keyword-tag:hover { border-color: var(--accent-purple); color: var(--accent-purple); background: rgba(168,85,247,0.08); }
+    .quick-stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 1rem; margin: 1rem 0; width: 100%; max-width: 940px;
+    }
+    .quick-stat {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 12px; padding: 1.2rem; text-align: center;
+    }
+    .quick-stat .num { font-size: 2rem; font-weight: 900; line-height: 1; margin-bottom: 4px; background: var(--gradient-witch); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .quick-stat .label { font-size: 0.8rem; color: var(--text-muted); letter-spacing: 1px; }
+
+    /* ===== Layout ===== */
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+    section { padding: 3.5rem 0; border-bottom: 1px solid var(--border-color); }
+    .section-tag { color: var(--accent-purple); font-size: 0.8rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.6rem; }
+    h2 { font-size: clamp(1.6rem, 4vw, 2.3rem); font-weight: 800; margin-bottom: 0.5rem; }
+    h2 .accent { background: var(--gradient-witch); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .section-desc { color: var(--text-secondary); margin-bottom: 2rem; max-width: 760px; }
+    h3 { font-size: 1.25rem; font-weight: 700; margin: 1.8rem 0 0.9rem; color: var(--text-primary); }
+
+    /* ===== Nav ===== */
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(13,13,26,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-color); }
+    nav .container { display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.7rem 1.5rem; }
+    nav a { white-space: nowrap; color: var(--text-secondary); text-decoration: none; font-size: 0.88rem; padding: 6px 14px; border-radius: 8px; transition: all 0.2s; }
+    nav a:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+
+    /* ===== Cards ===== */
+    .card-grid { display: grid; gap: 1.2rem; }
+    .cols-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .cols-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 14px; padding: 1.5rem; transition: all 0.3s;
+    }
+    .card:hover { background: var(--bg-card-hover); border-color: var(--accent-purple); transform: translateY(-3px); }
+    .card .icon { font-size: 1.8rem; margin-bottom: 0.7rem; }
+    .card h4 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .card p { color: var(--text-secondary); font-size: 0.92rem; }
+    .card .tag-line { margin-top: 0.8rem; font-size: 0.8rem; color: var(--accent-cyan); }
+
+    /* ===== Info box ===== */
+    .info-box { border-radius: 12px; padding: 1.3rem 1.5rem; margin: 1.3rem 0; border-left: 4px solid; }
+    .info-box.purple { background: rgba(168,85,247,0.08); border-color: var(--accent-purple); }
+    .info-box.blue   { background: rgba(59,130,246,0.08); border-color: var(--accent-blue); }
+    .info-box.green  { background: rgba(34,197,94,0.08); border-color: var(--accent-green); }
+    .info-box.yellow { background: rgba(234,179,8,0.08); border-color: var(--accent-yellow); }
+    .info-box .box-title { font-weight: 700; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 8px; }
+    .info-box p { color: var(--text-secondary); font-size: 0.92rem; }
+
+    /* ===== Table ===== */
+    .table-wrap { overflow-x: auto; margin: 1.2rem 0; border-radius: 12px; border: 1px solid var(--border-color); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 560px; }
+    th, td { padding: 0.85rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+    th { background: rgba(168,85,247,0.1); color: var(--text-primary); font-weight: 700; }
+    td { color: var(--text-secondary); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .mono { font-family: 'Consolas','Monaco',monospace; color: var(--accent-cyan); }
+
+    /* ===== Loop diagram ===== */
+    .loop { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem; margin: 1.5rem 0; }
+    .loop-node { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.9rem 1.2rem; text-align: center; min-width: 120px; }
+    .loop-node .n-icon { font-size: 1.4rem; }
+    .loop-node .n-label { font-size: 0.85rem; margin-top: 3px; }
+    .loop-arrow { color: var(--accent-purple); font-size: 1.4rem; }
+
+    /* ===== Pill / progress ===== */
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 0.78rem; font-weight: 600; }
+    .pill.p { background: rgba(168,85,247,0.15); color: #c99bff; }
+    .pill.g { background: rgba(34,197,94,0.15); color: #6ee7a0; }
+    .pill.y { background: rgba(234,179,8,0.15); color: #f0d060; }
+    .pill.b { background: rgba(59,130,246,0.15); color: #7fb0ff; }
+    .pill.r { background: rgba(239,68,68,0.15); color: #ff8888; }
+
+    ul.clean { list-style: none; }
+    ul.clean li { padding: 0.4rem 0 0.4rem 1.5rem; position: relative; color: var(--text-secondary); font-size: 0.94rem; }
+    ul.clean li::before { content: "▹"; position: absolute; left: 0; color: var(--accent-purple); }
+
+    .footer { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); font-size: 0.85rem; }
+    .footer a { color: var(--accent-cyan); text-decoration: none; }
+    code { background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 5px; font-family: 'Consolas',monospace; font-size: 0.85em; color: var(--accent-cyan); }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="hero-content">
+    <span class="hero-badge">Game Design Doc · 独立开发作品</span>
+    <h1>魔女试炼</h1>
+    <div class="hero-en">Witch Trial</div>
+    <p class="hero-tagline">横屏双轨跑酷 × 弹幕Boss 战 × 肉鸽成长<br>用「一根手指两个键」，撑起一套完整的 Build 构筑体验</p>
+    <div class="hero-keywords">
+      <span class="keyword-tag">双轨跑酷</span>
+      <span class="keyword-tag">弹幕 Boss 战</span>
+      <span class="keyword-tag">Roguelike 构筑</span>
+      <span class="keyword-tag">形态进化</span>
+      <span class="keyword-tag">无限模式</span>
+      <span class="keyword-tag">HTML5 Canvas 自研引擎</span>
+    </div>
+  </div>
+  <div class="quick-stats">
+    <div class="quick-stat"><div class="num">2</div><div class="label">操作按键</div></div>
+    <div class="quick-stat"><div class="num">5</div><div class="label">关卡 / Boss</div></div>
+    <div class="quick-stat"><div class="num">6</div><div class="label">Buff 词条</div></div>
+    <div class="quick-stat"><div class="num">4</div><div class="label">武器 / 形态</div></div>
+    <div class="quick-stat"><div class="num">∞</div><div class="label">无限模式</div></div>
+  </div>
+</header>
+
+<!-- ===== NAV ===== -->
+<nav>
+  <div class="container">
+    <a href="#overview">概述</a>
+    <a href="#pillars">设计支柱</a>
+    <a href="#loop">核心循环</a>
+    <a href="#run">跑酷阶段</a>
+    <a href="#growth">成长系统</a>
+    <a href="#boss">Boss 弹幕战</a>
+    <a href="#levels">关卡与数值</a>
+    <a href="#endless">无限模式</a>
+    <a href="#economy">经济与留存</a>
+    <a href="#tuning">数值配平</a>
+    <a href="#tech">技术与架构</a>
+    <a href="#roadmap">迭代与反思</a>
+  </div>
+</nav>
+
+<!-- ===== OVERVIEW ===== -->
+<section id="overview">
+  <div class="container">
+    <div class="section-tag">01/ Overview</div>
+    <h2>一句话定位：<span class="accent">好上手、难精通的「跑酷肉鸽」</span></h2>
+    <p class="section-desc">
+      《魔女试炼》是一款单人、横屏、像素风的休闲动作游戏。玩家扮演一名见习魔女，只用 <strong>上/ 下键</strong> 在双轨之间穿行、躲避障碍、收集试炼值；随着收集不断进化形态、三选一构筑 Buff；攒够目标后选择武器，进入 <strong>弹幕 Boss 战</strong> 决战。它把「跑酷的即时手感」和「肉鸽的一局一变」缝合在同一段体验里。
+    </p>
+    <div class="card-grid cols-3">
+      <div class="card">
+        <div class="icon">🎯</div>
+        <h4>目标玩家</h4>
+        <p>喜欢《喵斯快跑》《几何冲刺》的休闲玩家 + 想要「构筑成长」的轻度肉鸽用户。碎片时间可玩，单局 2–4 分钟。</p>
+      </div>
+      <div class="card">
+        <div class="icon">🕹️</div>
+        <h4>核心体验</h4>
+        <p>跑酷段的「心流走位」与 Boss 段的「弹幕爽快输出」交替，用最低操作门槛承载最丰富的成长决策。</p>
+      </div>
+      <div class="card">
+        <div class="icon">📱</div>
+        <h4>平台</h4>
+        <p>Web（HTML5），PC 键盘 + 手机触屏双适配，960×540 视口、零安装、静态可部署。</p>
+      </div>
+    </div>
+    <div class="info-box purple">
+      <div class="box-title">💡 为什么是这个组合？</div>
+      <p>单纯跑酷缺「目标感」，玩家跑久了会腻；单纯弹幕战门槛高、劝退休闲用户。把二者串成「跑酷收集 → 构筑变强 → Boss 验证成长」的节奏，让每一局都有明确的爬坡与高潮，同时把学习成本压到「两个键」。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PILLARS ===== -->
+<section id="pillars">
+  <div class="container">
+    <div class="section-tag">02 / Design Pillars</div>
+    <h2>三根<span class="accent">设计支柱</span></h2>
+    <p class="section-desc">所有玩法与数值决策都围绕这三条展开，遇到取舍时以支柱优先级为准。</p>
+    <div class="card-grid cols-3">
+      <div class="card">
+        <div class="icon">👆</div>
+        <h4>极简操作，深度决策</h4>
+        <p>操作只有「上 / 下」，但每次三选一 Buff、武器选择、走位取舍都是有意义的决策。<b>门槛低，天花板高。</b></p>
+        <div class="tag-line">对应系统：双轨 / 三选一 / 武器</div>
+      </div>
+      <div class="card">
+        <div class="icon">📈</div>
+        <h4>看得见的变强</h4>
+        <p>形态肉眼进化（换装 +拖尾）、收集物翻倍、Buff 叠层，让「我在变强」这件事随时可感知。</p>
+        <div class="tag-line">对应系统：形态 / Buff 叠加</div>
+      </div>
+      <div class="card">
+        <div class="icon">🎢</div>
+        <h4>节奏起伏</h4>
+        <p>跑酷（收集/积累）→ Boss（宣泄/验证）的张弛交替，每局都有清晰的爬坡与高潮，避免平铺直叙。</p>
+        <div class="tag-line">对应系统：关卡结构 / 无限模式</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CORE LOOP ===== -->
+<section id="loop">
+  <div class="container">
+    <div class="section-tag">03 / Core Loop</div>
+    <h2>核心<span class="accent">游戏循环</span></h2>
+    <p class="section-desc">一局游戏的完整节奏：跑酷收集与构筑在前，Boss 战验证在后，胜利解锁下一关，形成稳定的心流回路。</p>
+    <div class="loop">
+      <div class="loop-node"><div class="n-icon">📖</div><div class="n-label">剧情 Intro</div></div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node"><div class="n-icon">🏃</div><div class="n-label">跑酷收集</div></div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node"><div class="n-icon">🎲</div><div class="n-label">三选一 Buff<br>+ 形态进化</div></div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node"><div class="n-icon">🗡️</div><div class="n-label">武器选择</div></div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node"><div class="n-icon">💥</div><div class="n-label">弹幕 Boss 战</div></div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node"><div class="n-icon">🔓</div><div class="n-label">通关解锁</div></div>
+    </div>
+    <div class="info-box blue">
+      <div class="box-title">🔁 内嵌小循环</div>
+      <p>跑酷阶段本身是一个高频反馈循环：<b>躲障碍 → 吃收集物 → 试炼值累积 → 每满 2500 触发一次三选一</b>。玩家平均每十几秒就做一次构筑决策，保证注意力持续在线。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== RUN ===== -->
+<section id="run">
+  <div class="container">
+    <div class="section-tag">04 / Runner Phase</div>
+    <h2>跑酷阶段：<span class="accent">收集与走位</span></h2>
+    <p class="section-desc">这一段是「积累」环节，玩家在双轨间切换躲避障碍、拾取收集物，为Boss 战攒试炼值、堆构筑。</p>
+
+    <h3>操作与手感</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>输入</th><th>PC</th><th>手机</th><th>效果</th></tr>
+        <tr><td>切上轨</td><td>↑ / W</td><td>点上半屏</td><td>角色插值移动到上轨（<span class="mono">laneSwitchLerp=20</span>，干脆利落）</td></tr>
+        <tr><td>切下轨</td><td>↓ / S</td><td>点下半屏</td><td>同上，切轨伴随挤压拉伸 + 拖尾</td></tr>
+      </table>
+    </div>
+    <div class="info-box green">
+      <div class="box-title">🍬 Juice（手感反馈）全家桶</div>
+      <p>切轨挤压拉伸、残影拖尾、吃收集物粒子爆发、撞击屏震（<span class="mono">shakeOnHit=6</span>）与顿帧（<span class="mono">hitStop=0.12s</span>）。这些反馈不改变数值，但极大提升「操作爽感」，是休闲品类留存的关键。</p>
+    </div>
+
+    <h3>收集物与试炼值</h3>
+    <div class="two-col">
+      <div class="card">
+        <h4>⭐ 魔法星星</h4>
+        <p>基础收集物，<b>+50 试炼值</b>。出现频率高，构成积累主体。</p>
+      </div>
+      <div class="card">
+        <h4>🧪魔法药水</h4>
+        <p>高价值收集物，<b>+100 试炼值</b>，出现概率约 30–36%（随关卡递增）。鼓励玩家为高价值物切轨冒险。</p>
+      </div>
+    </div>
+
+    <h3>受伤设计：不秒死，用「代价」惩罚</h3>
+    <div class="info-box yellow">
+      <div class="box-title">⚠️ 设计取舍</div>
+      <p>撞障碍<b>不直接死亡</b>，而是扣 <span class="mono">20</span> 试炼值 + <span class="mono">0.55s</span> 僵直 + <span class="mono">0.9s</span> 无敌保护。理由：跑酷肉鸽的乐趣在「构筑与推进」，一撞就死会让长局积累付诸东流、挫败感过强，休闲用户流失。改为「拖慢进度」既保留了操作压力，又不粉碎单局投入。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== GROWTH ===== -->
+<section id="growth">
+  <div class="container">
+    <div class="section-tag">05 / Growth Systems</div>
+    <h2>三套<span class="accent">成长系统</span>：形态 · Buff · 武器</h2>
+    <p class="section-desc">这是肉鸽「构筑」的核心。形态是被动的视觉/里程碑成长，Buff 是主动构筑，武器决定 Boss 战输出手感——三者共同组成「一局一变」的Build。</p>
+
+    <h3>① 魔女形态进化（里程碑成长）</h3>
+    <p class="section-desc">累计试炼值达到阈值即自动进化，外观明显变化，给玩家「肉眼可见的变强」正反馈。</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>形态</th><th>阈值（累计试炼值）</th><th>视觉特征</th></tr>
+        <tr><td>水手服少女</td><td><span class="mono">0</span></td><td>初始形态，深蓝水手服</td></tr>
+        <tr><td>见习魔女</td><td><span class="mono">2500</span></td><td>获得尖顶帽 + 紫色斗篷</td></tr>
+        <tr><td>见习魔女·进阶</td><td><span class="mono">6000</span></td><td>斗篷进化，描边更亮</td></tr>
+        <tr><td>扫帚魔女 <span class="pill y">终极</span></td><td><span class="mono">12000</span></td><td>骑上扫帚、金色描边、星空紫</td></tr>
+      </table>
+    </div>
+    <div class="info-box purple">
+      <div class="box-title">🔗 关键联动</div>
+      <p>所有关卡的通关目标 <span class="mono">goalTrial ≥ 12000</span>，<b>确保玩家一定先进化到终极形态，才会进入 Boss 战</b>。形态进化线与关卡节奏被刻意对齐，让「变身完成」正好成为进入高潮战斗的仪式感。</p>
+    </div>
+
+    <h3>② 三选一 Buff（主动构筑）</h3>
+    <p class="section-desc">每累积 <span class="mono">2500</span> 试炼值触发一次三选一，可重复叠层（stacks）。构成本局的成长方向。</p>
+    <div class="card-grid cols-3">
+      <div class="card"><div class="icon">✦</div><h4>破障魔法</h4><p>冲撞击碎障碍不受伤，每层减少僵直。</p></div>
+      <div class="card"><div class="icon">✷</div><h4>双倍魔力</h4><p>收集物价值 ×2，可叠加 ×3 ×4…</p></div>
+      <div class="card"><div class="icon">❖</div><h4>护盾结界</h4><p>受伤减半，每层再减，扣血更少。</p></div>
+      <div class="card"><div class="icon">◆</div><h4>星辰牵引</h4><p>自动吸附邻近收集物，每层范围更大。</p></div>
+      <div class="card"><div class="icon">➤</div><h4>疾风加速</h4><p>得分速率提升，每层 +15% 距离分。</p></div>
+      <div class="card"><div class="icon">★</div><h4>幸运星</h4><p>收集物出现率提升，每层 +12%。</p></div>
+    </div>
+    <div class="info-box blue">
+      <div class="box-title">🎲 抽取规则的小心机</div>
+      <p>三选一<b>允许抽到已拥有的 Buff</b>，从而支持「专精叠层流」（如双倍魔力叠满滚雪球）与「铺开流」两种构筑路线，增加 build 多样性与重开动机。</p>
+    </div>
+
+    <h3>③ 武器选择（Boss 战输出手感）</h3>
+    <p class="section-desc">进入 Boss 战前选择武器，决定这场弹幕战的输出方式。可通过商城解锁更多武器。</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>武器</th><th>模式</th><th>伤害</th><th>射击间隔</th><th>弹速</th><th>定位</th></tr>
+        <tr><td>✦ 星辉法杖</td><td>单发直线</td><td>2</td><td class="mono">0.10s</td><td class="mono">420</td><td>极速连射，稳定基础</td></tr>
+        <tr><td>✷ 群星散射</td><td>三向扇形</td><td>2</td><td class="mono">0.20s</td><td class="mono">400</td><td>覆盖广，容错高</td></tr>
+        <tr><td>➤ 月光贯穿</td><td>穿透光束</td><td>4</td><td class="mono">0.30s</td><td class="mono">640</td><td>高爆发，命中即重创</td></tr>
+        <tr><td>★ 追踪飞星</td><td>自动追踪</td><td>2</td><td class="mono">0.16s</td><td class="mono">340</td><td>免瞄准，专注走位</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== BOSS ===== -->
+<section id="boss">
+  <div class="container">
+    <div class="section-tag">06 / Boss Battle</div>
+    <h2>弹幕 <span class="accent">Boss 战</span>：一局的高潮</h2>
+    <p class="section-desc">跑酷积累的终点。玩家纵向走位躲弹幕、持续输出，收集<b>六芒星</b>触发狂暴，击败 Boss 即通关。每个 Boss 有独立弹幕形态与移动方式。</p>
+
+    <div class="table-wrap">
+      <table>
+        <tr><th>关卡</th><th>Boss</th><th>血量</th><th>移动方式</th><th>弹幕形态</th><th>目标时长</th></tr>
+        <tr><td>1迷雾森林</td><td>邪恶蘑菇</td><td class="mono">460</td><td>上下摇摆</td><td>扇形喷射 + 瞄准弹</td><td>~30s</td></tr>
+        <tr><td>2毒沼藤林</td><td>邪恶藤蔓</td><td class="mono">540</td><td>上下摇摆</td><td>波浪弹 + 瞄准弹</td><td>~35s</td></tr>
+        <tr><td>3 水晶洞窟</td><td>水晶魔像</td><td class="mono">620</td><td>追踪玩家 Y</td><td>环形弹 + 瞄准弹</td><td>~40s</td></tr>
+        <tr><td>4 幽灵城堡</td><td>幽灵领主</td><td class="mono">700</td><td>瞬移</td><td>螺旋弹 + 瞄准弹</td><td>~45s</td></tr>
+        <tr><td>5 月蚀祭坛</td><td>月蚀魔女<span class="pill y">最终</span></td><td class="mono">800</td><td>高速摇摆</td><td>环形 + 螺旋 + 瞄准三重</td><td>~50s</td></tr>
+      </table>
+    </div>
+
+    <div class="info-box green">
+      <div class="box-title">⚔️ 弹幕难度曲线的配平思路</div>
+      <p>难度<b>不靠堆弹量恐吓休闲玩家</b>，而是靠「弹幕种类逐关叠加 + 移动方式变复杂」制造新鲜感：从固定摇摆（好预判）→ 追踪 / 瞬移（要临场反应）→ 最终三种弹幕齐发。血量按「玩家有效 DPS 约 12–16、至少撑住 30 秒」反推，确保每场都打得到、打得爽，又不会秒杀。</p>
+    </div>
+
+    <div class="two-col">
+      <div class="card"><div class="icon">✡️</div><h4>六芒星狂暴 / 收集</h4><p>战斗中收集六芒星，攒满触发狂暴输出窗口，给玩家「主动创造爆发」的操作空间，也是 Boss 战的节奏调味料。</p></div>
+      <div class="card"><div class="icon">🎯</div><h4>弹型库</h4><p>扇形 spread / 波浪 wave / 环形 ring / 螺旋 spiral / 瞄准 aimed，数据化配置，新增 Boss 只需组合 patterns 数组。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LEVELS ===== -->
+<section id="levels">
+  <div class="container">
+    <div class="section-tag">07 / Levels & Numbers</div>
+    <h2>关卡结构与<span class="accent">难度爬升</span></h2>
+    <p class="section-desc">5 个关卡各有独立主题配色、剧情 Intro 与 Boss。难度通过「速度倍率 + 通关目标 + Boss 强度」三条曲线协同递增。</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>关卡</th><th>主题</th><th>速度倍率</th><th>通关目标(试炼值)</th><th>药水概率</th><th>通关奖励</th></tr>
+        <tr><td>Lv.1</td><td>迷雾森林 · 见习魔女的第一课</td><td class="mono">1.00×</td><td class="mono">12000</td><td>30%</td><td>💰 30</td></tr>
+        <tr><td>Lv.2</td><td>毒沼藤林 · 缠绕的恶意</td><td class="mono">1.12×</td><td class="mono">13500</td><td>30%</td><td>💰 45</td></tr>
+        <tr><td>Lv.3</td><td>水晶洞窟 · 回响的低语</td><td class="mono">1.24×</td><td class="mono">15000</td><td>32%</td><td>💰 60</td></tr>
+        <tr><td>Lv.4</td><td>幽灵城堡 · 不眠的宿敌</td><td class="mono">1.36×</td><td class="mono">16500</td><td>34%</td><td>💰 80</td></tr>
+        <tr><td>Lv.5</td><td>月蚀祭坛 · 最终试炼</td><td class="mono">1.50×</td><td class="mono">18000</td><td>36%</td><td>💰 150</td></tr>
+      </table>
+    </div>
+    <div class="info-box purple">
+      <div class="box-title">📊 数值曲线怎么设计的</div>
+      <p><b>速度</b>线性 +0.12×/关，提升操作压力；<b>目标试炼值</b>阶梯递增（+1500 起、逐步加大），拉长后期单局；<b>药水概率</b>微涨补偿难度，避免后期因障碍变密而收集受挫；<b>奖励</b>末关跳变到 150，强化「打通全流程」的成就与经济激励。三条曲线错峰递增，避免难度断层。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ENDLESS ===== -->
+<section id="endless">
+  <div class="container">
+    <div class="section-tag">08 / Endless Mode</div>
+    <h2>♾️ 无限模式：<span class="accent">长期挑战锚点</span></h2>
+    <p class="section-desc">通关五关后的核心留存内容。流程与普通关一致，但每轮 Boss 随机、目标递增、属性无限叠加，追求「你能撑到第几轮」。</p>
+    <div class="card-grid cols-3">
+      <div class="card"><div class="icon">🎲</div><h4>Boss 随机</h4><p>每轮从 5 个 Boss 中随机抽取，配色主题也随机切换，保证每轮画面与挑战都新鲜。</p></div>
+      <div class="card"><div class="icon">📈</div><h4>目标递增</h4><p>第 1 轮 12000，之后<b>每轮 +3000</b>；速度每轮 +0.12×（封顶 2.2×），难度平滑爬升。</p></div>
+      <div class="card"><div class="icon">🔄</div><h4>属性 Carry</h4><p>Buff / 收集度 / 试炼值<b>跨轮累加不清零</b>，玩家越滚越强，与递增难度赛跑，形成滚雪球张力。</p></div>
+    </div>
+    <div class="info-box yellow">
+      <div class="box-title">🎯 为什么要做无限模式</div>
+      <p>5 关是有限内容，通关即流失。无限模式用「随机 + 无限叠加 + 排行心态（撑到第几轮）」把内容寿命拉长到近乎无限，是低成本、高留存的经典手法。同时它只累加金币、<b>不影响关卡解锁</b>，与主线进度解耦，避免破坏正常曲线。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ECONOMY ===== -->
+<section id="economy">
+  <div class="container">
+    <div class="section-tag">09 / Economy & Retention</div>
+    <h2>经济系统与<span class="accent">留存设计</span></h2>
+    <p class="section-desc">金币是唯一软通货，来源清晰、去向明确，围绕「外观养成+ 武器解锁」构建长期目标。</p>
+    <div class="two-col">
+      <div class="card">
+        <h4>💰 金币来源</h4>
+        <ul class="clean">
+          <li>关卡通关奖励（30→ 150 递增）</li>
+          <li>无限模式每轮结算</li>
+          <li>单局跑酷收集折算</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🛒 金币去向（商城）</h4>
+        <ul class="clean">
+          <li>角色皮肤 / 背景皮肤 / 障碍皮肤</li>
+          <li>解锁进阶武器（散射 / 贯穿 / 追踪）</li>
+          <li>纯外观 + 手感向，不做数值付费墙</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box green">
+      <div class="box-title">💾 存档与留存</div>
+      <p>使用 <code>localStorage</code> 持久化：金币、最高分、已购/已装备皮肤、关卡解锁进度。零登录、即开即玩。皮肤系统数据驱动——<b>新增皮肤只需往<code>skins.js</code> 数组加一条配置，商城自动展示</b>，运营可低成本持续投放新内容维持活跃。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TUNING ===== -->
+<section id="tuning">
+  <div class="container">
+    <div class="section-tag">10 / Numeric Tuning</div>
+    <h2>数值配平的<span class="accent">工程化思路</span></h2>
+    <p class="section-desc">作为策划最看重的能力：把「手感」翻译成可调参数，让调优可复现、可快速迭代。全部核心手感/难度数值集中在单一配置文件 <code>config.js</code>。</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>参数</th><th>值</th><th>作用</th></tr>
+        <tr><td class="mono">startSpeed / maxSpeed</td><td>140 → 340</td><td>滚动速度区间，决定基础操作压力</td></tr>
+        <tr><td class="mono">accel</td><td>6/s</td><td>速度爬升斜率，控制单局难度上扬节奏</td></tr>
+        <tr><td class="mono">spawnStart → spawnMin</td><td>1.05s → 0.5s</td><td>障碍生成间隔收窄，制造后期密度压力</td></tr>
+        <tr><td class="mono">orbChance</td><td>0.42</td><td>收集物 / 障碍比例，平衡「爽」与「险」</td></tr>
+        <tr><td class="mono">trialPerLevel</td><td>2500</td><td>三选一触发频率，决定构筑决策密度</td></tr>
+        <tr><td class="mono">hitPenalty / stunTime</td><td>20 / 0.55s</td><td>受伤代价，惩罚强度的调节旋钮</td></tr>
+      </table>
+    </div>
+    <div class="info-box blue">
+      <div class="box-title">🔧 配平方法论</div>
+      <p>① 先定<b>体验目标</b>（如「Boss 战至少 30 秒」）；② 反推<b>关键数值</b>（玩家 DPS × 目标时长 = 血量）；③ 参数<b>集中收口</b>到 config，改一处即时生效；④ 三条难度曲线（速度 / 目标 / Boss）<b>错峰递增</b>避免断层。这套「目标 → 反推 → 收口 → 曲线」流程可复用到任何数值模块。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TECH ===== -->
+<section id="tech">
+  <div class="container">
+    <div class="section-tag">11 / Architecture</div>
+    <h2>技术与<span class="accent">系统架构</span></h2>
+    <p class="section-desc">原生 HTML5 Canvas + ES Modules 自研引擎，零构建依赖。数据与逻辑分离，便于策划独立调整内容。</p>
+    <div class="card-grid cols-2">
+      <div class="card">
+        <h4>🧩 数据驱动（策划友好）</h4>
+        <p>关卡 / Boss / 武器 / Buff / 形态 / 皮肤全部拆成独立数据文件。<b>加内容 = 加一条配置</b>，不碰逻辑代码：</p>
+        <ul class="clean">
+          <li><code>levels.js</code> 关卡 + 无限模式生成器</li>
+          <li><code>bosses.js</code> Boss 弹幕 patterns</li>
+          <li><code>weapons.js / buffs.js / witchForms.js</code> 成长三件套</li>
+          <li><code>config.js</code> 全局手感参数</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>⚙️ 引擎与场景</h4>
+        <p>自研游戏循环（dt 上限、场景栈）+ 整数放大像素渲染管线。场景清晰分层：</p>
+        <ul class="clean">
+          <li>Menu / LevelSelect / Intro（前置）</li>
+          <li>Run（跑酷）/ WeaponSelect / Boss（战斗）</li>
+          <li>Shop（商城）· Save（localStorage 存档）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box purple">
+      <div class="box-title">🎮 在线体验 / 源码</div>
+      <p>GitHub 仓库：<code>github.com/muyuxuanzhi/witch-trial</code>（自研引擎、可直接部署静态站点在线试玩）。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ROADMAP ===== -->
+<section id="roadmap">
+  <div class="container">
+    <div class="section-tag">12 / Iteration & Reflection</div>
+    <h2>迭代历程与<span class="accent">设计反思</span></h2>
+    <p class="section-desc">本作由纯跑酷原型「霓虹疾跑」演进而来，逐步长成带成长与战斗的完整肉鸽——这个过程本身就是一次「找乐趣」的设计迭代。</p>
+    <div class="two-col">
+      <div class="card">
+        <h4>📜 迭代路线</h4>
+        <ul class="clean">
+          <li><b>v1</b> 纯双轨跑酷原型（验证手感）</li>
+          <li><b>v2</b> 加入试炼值、形态进化、三选一 Buff（引入成长）</li>
+          <li><b>v3</b> 关卡 / 剧情 / 弹幕 Boss 战 / 武器（构成完整循环）</li>
+          <li><b>v4</b> 无限模式 + 商城经济（拉长寿命与留存）</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔮 后续可拓展方向</h4>
+        <ul class="clean">
+          <li>Buff 之间的<b>协同 / 组合技</b>（构筑深度）</li>
+          <li>Boss 二阶段 / 狂暴变招</li>
+          <li>每日挑战 + 分数排行榜</li>
+          <li>诅咒 / 高风险高回报词条</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box yellow">
+      <div class="box-title">🪞 我从这个项目学到的</div>
+      <p>① <b>先做最小可玩核心再叠系统</b>：手感没打磨好之前不堆内容；② <b>用数据驱动换迭代速度</b>：把内容和逻辑解耦，让「调数值 / 加关卡」变成分钟级操作；③ <b>为不同玩家留出路径</b>：休闲玩家靠通关正反馈，硬核玩家靠无限模式与专精 build——同一套系统服务两类人。</p>
+    </div>
+  </div>
+</section>
+
+<div class="footer">
+  《魔女试炼 / Witch Trial》游戏策划案 · 独立开发作品<br>
+  个人负责：玩法设计 · 数值配平 · 系统架构 · 美术与实现全流程<br>
+  <a href="https://github.com/muyuxuanzhi/witch-trial">github.com/muyuxuanzhi/witch-trial</a>
+</div>
+
+</body>
+</html>
