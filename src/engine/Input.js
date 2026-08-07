@@ -30,27 +30,9 @@ export class Input {
     if (canvas) {
       const setP = (e) => {
         const r = canvas.getBoundingClientRect();
-        const rotated = document.body && document.body.classList.contains("rotate");
-        if (rotated) {
-          // 舞台顺时针旋转 90°：以 canvas 视觉中心做反旋转，再映射到内部分辨率。
-          // getBoundingClientRect 在旋转后返回的是包围盒，其中心即为 canvas 中心。
-          const ccx = r.left + r.width / 2;
-          const ccy = r.top + r.height / 2;
-          const ox = e.clientX - ccx;
-          const oy = e.clientY - ccy;
-          // 反向旋转 90°(顺时针显示 → 逆旋转)：local = (oy, -ox)
-          const lx = oy;
-          const ly = -ox;
-          // 旋转后视觉宽=r.height、视觉高=r.width；除以缩放后的实际显示尺寸
-          const dispW = r.height; // 游戏横向对应的屏幕方向尺寸
-          const dispH = r.width;
-          this.pointer.x = (lx / dispW + 0.5) * canvas.width;
-          this.pointer.y = (ly / dispH + 0.5) * canvas.height;
-        } else {
-          // 把屏幕坐标换算到内部分辨率坐标（canvas.width = 内部宽）
-          this.pointer.x = ((e.clientX - r.left) / r.width) * canvas.width;
-          this.pointer.y = ((e.clientY - r.top) / r.height) * canvas.height;
-        }
+        // 无 CSS 旋转，直接把屏幕坐标换算到内部分辨率坐标
+        this.pointer.x = ((e.clientX - r.left) / r.width) * canvas.width;
+        this.pointer.y = ((e.clientY - r.top) / r.height) * canvas.height;
       };
       canvas.addEventListener("pointerdown", (e) => {
         setP(e);
@@ -79,11 +61,9 @@ export class Input {
       this._touch.lastX = t.clientX;
       this._touch.lastY = t.clientY;
       if (this._touch.fired) return;
-      const { dx, dy } = this._dirDelta(
-        t.clientX - this._touch.startX,
-        t.clientY - this._touch.startY
-      );
-      // 以"游戏视觉上的纵向"为准（考虑 CSS 旋转），纵向占主导才判定为切轨
+      const dx = t.clientX - this._touch.startX;
+      const dy = t.clientY - this._touch.startY;
+      // 纵向占主导才判定为切轨
       if (Math.abs(dy) >= this._swipeThreshold && Math.abs(dy) > Math.abs(dx)) {
         if (dy < 0) this.swipeUp = true; else this.swipeDown = true;
         this._touch.fired = true;   // 一次滑动只触发一次
@@ -95,18 +75,6 @@ export class Input {
     window.addEventListener("touchmove", onMove, { passive: true });
     window.addEventListener("touchend", onEnd, { passive: true });
     window.addEventListener("touchcancel", onEnd, { passive: true });
-  }
-
-  // 把物理滑动位移换算到"游戏视觉方向"：
-  // 当页面因竖屏而把 #stage 旋转 90° 显示时（body.rotate），
-  // 手指的物理"上滑"对应游戏画面里的"左滑"，需要重新映射。
-  _dirDelta(pdx, pdy) {
-    if (document.body && document.body.classList.contains("rotate")) {
-      // 顺时针旋转 90°：屏幕向右滑 = 游戏向上；屏幕向左滑 = 游戏向下
-      // 物理位移 (pdx,pdy) → 游戏位移：gameDx = -pdy, gameDy = pdx
-      return { dx: -pdy, dy: pdx };
-    }
-    return { dx: pdx, dy: pdy };
   }
 
   isDown(...keys) {

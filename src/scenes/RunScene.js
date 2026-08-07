@@ -314,7 +314,8 @@ export class RunScene extends Scene {
       // 稀有金色六芒星在中间轨(lane=-1)：切轨途中经过即可拾取
       // 用玩家中心y 与中间线的竖直距离判定，配合水平重叠
       if (e.orbKind === "rarestar") {
-        const overlapX = e.x < pR && e.x + e.w > pL;
+        const prevRight = (e.prevX != null ? e.prevX : e.x) + e.w;
+        const overlapX = e.x < pR && prevRight > pL;
         const dy = Math.abs(this.player.cy - CONFIG.laneMidY);
         if (overlapX && dy < 24) {
           e.dead = true;
@@ -330,7 +331,8 @@ export class RunScene extends Scene {
       if (e.lane !== this.player.lane) continue;
 
       if (e.type === "orb") {
-        if (!(e.x < pR && e.x + e.w > pL)) continue;
+        const prevRight = (e.prevX != null ? e.prevX : e.x) + e.w;
+        if (!(e.x < pR && prevRight > pL)) continue;
         e.dead = true;
         const doubleMul = 1 + this.stacks("double");
         const base = e.orbKind === "potion" ? CONFIG.potionValue : CONFIG.starValue;
@@ -338,7 +340,10 @@ export class RunScene extends Scene {
         const color = e.orbKind === "potion" ? PALETTE.cyan : PALETTE.gold;
         this._gainTrial(val, e.x + e.w / 2, this.player.cy, color);
       } else {
-        if (!(e.x < hR && e.x + e.w > hL)) continue;
+        // 障碍从右向左移动，用"扫掠区间"判定：本帧覆盖 [e.x, prevRight]，
+        // 避免高速下细障碍一帧内跨过玩家判定区而漏检（碰到不受伤）。
+        const prevRight = (e.prevX != null ? e.prevX : e.x) + e.w;
+        if (!(e.x < hR && prevRight > hL)) continue;
         this._hitObstacle(e);
         break;
       }

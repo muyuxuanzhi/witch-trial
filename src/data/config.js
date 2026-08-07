@@ -28,7 +28,8 @@ export const CONFIG = {
   obstacleW: 16,         // 普通障碍宽度
   burstObstacleW: 9,     // 成组障碍宽度（更细，便于连续躲避）
   burstGapMin: 62,       // 成组障碍最小水平间距（保证有反应/切轨时间）
-  hitboxInset: 4,        // 玩家碰撞判定水平内缩（视觉不变，判定更宽松）
+  orbSafeGap: 30,        // 障碍附带收集物时，与障碍拉开的安全水平间距（避免重叠捡不到）
+  hitboxInset: 2,        // 玩家碰撞判定水平内缩（视觉不变，判定略宽松但仍贴近视觉）
 
   // 手感
   hitStop: 0.12,         // 碰撞顿帧时长

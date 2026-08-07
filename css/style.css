@@ -28,15 +28,6 @@ html, body {
   align-items: center;
   justify-content: center;
   position: relative;
-  transform-origin: center center;
-}
-
-/* 竖屏时旋转整块舞台 90°，实现"横屏铺满"的全屏体验。
-   用 100vh/100vw 交换宽高，使旋转后正好填满可视区域。 */
-body.rotate #stage {
-  width: 100vh;
-  height: 100vw;
-  transform: rotate(90deg);
 }
 
 #game {
@@ -65,20 +56,45 @@ body.rotate #stage {
   white-space: normal;/* 允许换行，避免小屏文字被截断/重叠 */
 }
 
-/* 竖屏旋转时，提示条也跟随旋转并贴到画面底部，避免与画布重叠 */
-body.rotate #hint {
-  bottom: auto;
-  left: auto;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%) rotate(90deg);
-  transform-origin: right center;
-  width: 80vh;
-}
-
 /* 小屏进一步缩小提示字号，防止重叠 */
 @media (max-width: 560px) {
   #hint { font-size: 10px; letter-spacing: 0.5px; }
+}
+
+/* 竖屏旋转提示遮罩：手机竖着拿时提示"请横屏"，横过来自动消失。
+   不再对画面做 CSS 旋转，避免坐标错乱。 */
+#rotateTip {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg);
+  color: var(--neon);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+  padding: 24px;
+}
+#rotateTip .icon {
+  font-size: 64px;
+  animation: rotateHint 1.8s ease-in-out infinite;
+}
+#rotateTip .txt { font-size: 18px; letter-spacing: 2px; line-height: 1.6; }
+#rotateTip .sub { font-size: 13px; color: rgba(185,107,255,0.6); }
+
+@keyframes rotateHint {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(90deg); }
+}
+
+/* 仅在竖屏(高>宽)的触摸设备上显示"请横屏"提示 */
+body.portrait #rotateTip { display: flex; }
+
+/* 保险：支持悬停的设备（桌面鼠标）永远不显示遮罩，避免挡住点击 */
+@media (hover: hover) and (pointer: fine) {
+  #rotateTip { display: none !important; }
 }
 
 /* 全屏按钮：右上角悬浮，点击进入/退出全屏 */

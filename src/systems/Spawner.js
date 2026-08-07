@@ -40,16 +40,22 @@ export class Spawner {
       this._spawn();
     }
 
-    for (const e of this.entities) e.x -= speed * dt;
+    // 记录移动前的 x（prevX），供碰撞做"扫掠判定"，
+    // 避免高速时障碍一帧内跨过玩家判定区而漏检。
+    for (const e of this.entities) {
+      e.prevX = e.x;
+      e.x -= speed * dt;
+    }
     this.entities = this.entities.filter((e) => e.x + e.w > -20 && !e.dead);
   }
 
   _spawn() {
     const spawnX = 500;
 
-    // 稀有金色六芒星：中间轨（laneMidY）漂浮，概率很低，独立于常规生成
+    // 稀有金色六芒星：中间轨（laneMidY）漂浮，概率很低，独立于常规生成。
+    // 用错开的 x，避免与本次障碍/收集物挤在同一列。
     if (Math.random() < CONFIG.rareStarChance) {
-      this.entities.push(this._makeRareStar(spawnX));
+      this.entities.push(this._makeRareStar(spawnX + 40));
     }
 
     // 空档喘息：本次不生成障碍/收集物，制造节奏留白
@@ -68,8 +74,11 @@ export class Spawner {
       this.entities.push(this._makeOrb(lane, spawnX));
     } else {
       this.entities.push(this._makeObstacle(lane, spawnX));
+      // 障碍的另一轨附带收集物：放在障碍"之后"一段安全距离，
+      // 让玩家切轨躲障碍后顺势捡到，绝不与障碍同列重叠导致捡不了。
       if (Math.random() < CONFIG.pairOrbChance) {
-        this.entities.push(this._makeOrb(lane === 0 ? 1 : 0, spawnX + 4));
+        const orbX = spawnX + CONFIG.obstacleW + CONFIG.orbSafeGap + Math.random() * 20;
+        this.entities.push(this._makeOrb(lane === 0 ? 1 : 0, orbX));
       }
     }
   }
