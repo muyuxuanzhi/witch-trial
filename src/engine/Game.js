@@ -34,18 +34,18 @@ export class Game {
   _resize() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    // 不再对画面做 CSS 旋转（那会导致坐标错乱）。
-    // 仅在"真正的移动/触摸设备"竖屏时，才显示"请横屏"遮罩。
-    // 注意：很多带触摸屏的笔记本 maxTouchPoints>0，但主输入是鼠标，
-    // 不能据此判定为手机，否则窗口竖着就会误弹遮罩挡住鼠标点击。
+    // 固定横屏：竖屏(高>宽)时用 CSS 把 #stage 旋转 90° 铺满整块竖屏。
+    // 旋转后可用空间的"宽/高"相当于交换 vw/vh。
     const portrait = vh > vw;
-    const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-    const noHover = window.matchMedia && window.matchMedia("(hover: none)").matches;
-    const isMobile = coarse && noHover; // 主指针为触摸且不支持悬停→ 视为手机/平板
-    document.body.classList.toggle("portrait", portrait && isMobile);
+    document.body.classList.toggle("forceLandscape", portrait);
+    // 记录旋转状态供 Input 做坐标反变换
+    this.rotated = portrait;
 
-    // canvas 始终按当前真实可用空间等比缩放并居中（横屏自然铺满）。
-    const scale = Math.min(vw / this.width, vh / this.height);
+    // 计算可用空间：旋转时用交换后的尺寸（容器宽=vh，容器高=vw）
+    const availW = portrait ? vh : vw;
+    const availH = portrait ? vw : vh;
+
+    const scale = Math.min(availW / this.width, availH / this.height);
     this.scale = scale;
     this.canvas.width = this.width;
     this.canvas.height = this.height;

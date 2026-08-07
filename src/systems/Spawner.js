@@ -17,26 +17,19 @@ export class Spawner {
   reset() {
     this.entities.length = 0;
     this.timer = 0;
-    this.interval = this._nextInterval(0);
-  }
-
-  // 计算下一次生成的间隔：基准随时间缩短，再叠加大幅随机抖动 → 分布不均匀
-  _nextInterval(elapsed) {
-    const base = Math.max(
-      CONFIG.spawnMin,
-      CONFIG.spawnStart - elapsed * CONFIG.spawnRampSpeed
-    );
-    // 抖动系数：在 [1-jitter, 1+jitter] 间随机，制造疏密不均的节奏
-    const j = CONFIG.spawnJitter;
-    const factor = 1 - j + Math.random() * (j * 2);
-    return base * factor;
+    this.interval = CONFIG.spawnStart;
   }
 
   update(dt, speed, elapsed) {
+    // 规律形式：间隔随时间平滑缩短，无随机抖动
+    this.interval = Math.max(
+      CONFIG.spawnMin,
+      CONFIG.spawnStart - elapsed * CONFIG.spawnRampSpeed
+    );
+
     this.timer += dt;
     if (this.timer >= this.interval) {
       this.timer = 0;
-      this.interval = this._nextInterval(elapsed);
       this._spawn();
     }
 
@@ -53,57 +46,29 @@ export class Spawner {
     const spawnX = 500;
 
     // 稀有金色六芒星：中间轨（laneMidY）漂浮，概率很低，独立于常规生成。
-    // 用错开的 x，避免与本次障碍/收集物挤在同一列。
+    // 用错开的 x，避免与本次障碍/收集物挤在同一列。（六芒星逻辑保持不变）
     if (Math.random() < CONFIG.rareStarChance) {
       this.entities.push(this._makeRareStar(spawnX + 40));
     }
 
-    // 空档喘息：本次不生成障碍/收集物，制造节奏留白
-    if (Math.random() < CONFIG.gapChance) return;
-
+    // 恢复原来的规律生成：或障碍、或收集物；
+    // 障碍时在另一轨的相同 x 附带一个收集物。
     const lane = Math.random() < 0.5 ? 0 : 1;
     const orbChance = Math.min(0.85, CONFIG.orbChance + this.orbBonus);
-
-    // 成组生成：让密度忽高忽低，进一步打破规律
-    if (Math.random() < CONFIG.burstChance) {
-      this._spawnBurst(lane, spawnX, orbChance);
-      return;
-    }
 
     if (Math.random() < orbChance) {
       this.entities.push(this._makeOrb(lane, spawnX));
     } else {
       this.entities.push(this._makeObstacle(lane, spawnX));
-      // 障碍的另一轨附带收集物：放在障碍"之后"一段安全距离，
-      // 让玩家切轨躲障碍后顺势捡到，绝不与障碍同列重叠导致捡不了。
       if (Math.random() < CONFIG.pairOrbChance) {
-        const orbX = spawnX + CONFIG.obstacleW + CONFIG.orbSafeGap + Math.random() * 20;
-        this.entities.push(this._makeOrb(lane === 0 ? 1 : 0, orbX));
+        this.entities.push(this._makeOrb(lane === 0 ? 1 : 0, spawnX + 4));
       }
     }
   }
 
-  // 成组：一串收集物，或一串"细障碍"。障碍成组时全部集中在同一条轨道，
-  // 另一轨保持畅通，保证玩家切轨即可安全通过；障碍更细、间距更大，留足反应时间。
-  _spawnBurst(lane, x, orbChance) {
-    const count = 2 + Math.floor(Math.random() * 2); // 2~3 个
-    let cursor = x;
-    const asOrbs = Math.random() < orbChance;
-    for (let i = 0; i < count; i++) {
-      if (asOrbs) {
-        this.entities.push(this._makeOrb(lane, cursor));
-        cursor += 26 + Math.random() * 40; // 收集物间距可较随意
-      } else {
-        this.entities.push(this._makeObstacle(lane, cursor, true)); // 细障碍
-        cursor += CONFIG.burstGapMin + Math.random() * 34; // 障碍间距更大
-      }
-    }
-  }
-
-  _makeObstacle(lane, x, slim = false) {
+  _makeObstacle(lane, x) {
     const h = 20 + Math.floor(Math.random() * 10);
-    const w = slim ? CONFIG.burstObstacleW : CONFIG.obstacleW;
-    return { type: "obstacle", lane, x, w, h, dead: false };
+    return { type: "obstacle", lane, x, w: CONFIG.obstacleW, h, dead: false };
   }
 
   _makeOrb(lane, x) {

@@ -30,9 +30,27 @@ export class Input {
     if (canvas) {
       const setP = (e) => {
         const r = canvas.getBoundingClientRect();
-        // 无 CSS 旋转，直接把屏幕坐标换算到内部分辨率坐标
-        this.pointer.x = ((e.clientX - r.left) / r.width) * canvas.width;
-        this.pointer.y = ((e.clientY - r.top) / r.height) * canvas.height;
+        const rotated = document.body && document.body.classList.contains("forceLandscape");
+        if (rotated) {
+          // #stage 顺时针旋转 90°：以canvas 视觉包围盒中心做反旋转，
+          // 再映射到内部分辨率。包围盒中心即 canvas 中心。
+          const ccx = r.left + r.width / 2;
+          const ccy = r.top + r.height / 2;
+          const ox = e.clientX - ccx;
+          const oy = e.clientY - ccy;
+          // 顺时针 90° 的逆变换：local = (-oy, ox)
+          const lx = -oy;
+          const ly = ox;
+          // 旋转后视觉包围盒：宽 r.width 对应游戏纵向，高 r.height 对应游戏横向
+          const dispW = r.height; // 游戏横向在屏幕上的尺寸
+          const dispH = r.width;  // 游戏纵向在屏幕上的尺寸
+          this.pointer.x = (lx / dispW + 0.5) * canvas.width;
+          this.pointer.y = (ly / dispH + 0.5) * canvas.height;
+        } else {
+          // 无旋转：直接把屏幕坐标换算到内部分辨率坐标
+          this.pointer.x = ((e.clientX - r.left) / r.width) * canvas.width;
+          this.pointer.y = ((e.clientY - r.top) / r.height) * canvas.height;
+        }
       };
       canvas.addEventListener("pointerdown", (e) => {
         setP(e);
@@ -61,8 +79,15 @@ export class Input {
       this._touch.lastX = t.clientX;
       this._touch.lastY = t.clientY;
       if (this._touch.fired) return;
-      const dx = t.clientX - this._touch.startX;
-      const dy = t.clientY - this._touch.startY;
+      let dx = t.clientX - this._touch.startX;
+      let dy = t.clientY - this._touch.startY;
+      // 固定横屏(#stage 顺时针旋转 90°)时，物理滑动需反变换到游戏方向：
+      // gameDx = -pdy, gameDy = pdx
+      if (document.body && document.body.classList.contains("forceLandscape")) {
+        const pdx = dx, pdy = dy;
+        dx = -pdy;
+        dy = pdx;
+      }
       // 纵向占主导才判定为切轨
       if (Math.abs(dy) >= this._swipeThreshold && Math.abs(dy) > Math.abs(dx)) {
         if (dy < 0) this.swipeUp = true; else this.swipeDown = true;
