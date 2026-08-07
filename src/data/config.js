@@ -3,6 +3,7 @@ export const CONFIG = {
   // 场景布局（内部分辨率 480x270）
   groundY: 214,          // 地面基准线
   laneTopY: [104, 176],  // 玩家在 [上轨, 下轨] 的 y（顶部坐标）
+  laneMidY: 140,         // 上下轨中间线（稀有金色六芒星漂浮位置，玩家切轨路径经过）
   playerX: 96,
   playerW: 16,
   playerH: 22,
@@ -14,11 +15,16 @@ export const CONFIG = {
   laneSwitchLerp: 20,    // 切轨视觉插值速度（越大越干脆）
 
   // 生成
-  spawnStart: 1.05,      // 初始生成间隔（秒）
-  spawnMin: 0.5,         // 最小生成间隔
+  spawnStart: 1.05,      // 初始生成间隔（秒）基准
+  spawnMin: 0.5,         // 最小生成间隔基准
   spawnRampSpeed: 0.02,  // 每秒缩短的间隔
+  spawnJitter: 0.55,     // 生成间隔随机抖动比例（0~1，越大分布越不均匀）
   orbChance: 0.42,       // 生成物为光点的概率（否则为障碍）
   pairOrbChance: 0.5,    // 生成障碍时，另一轨附带光点的概率
+  burstChance: 0.22,     // 触发"成组生成"（连续障碍或一串收集物）的概率
+  gapChance: 0.14,       // 触发"空档喘息"（本次不生成任何东西）的概率
+  rareStarChance: 0.06,  // 中间轨稀有金色六芒星的生成概率（每次生成判定）
+  rareStarValue: 300,    // 稀有金色六芒星的试炼值
 
   // 手感
   hitStop: 0.12,         // 碰撞顿帧时长

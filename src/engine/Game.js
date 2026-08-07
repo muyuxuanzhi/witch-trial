@@ -28,11 +28,24 @@ export class Game {
 
     this._resize();
     window.addEventListener("resize", () => this._resize());
+    window.addEventListener("orientationchange", () => setTimeout(() => this._resize(), 120));
   }
 
   _resize() {
-    // 自适应缩放：按比例填满屏幕（手机竖屏也能占满宽度），保持像素锐利
-    const scale = Math.min(window.innerWidth / this.width, window.innerHeight / this.height);
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // 竖屏（高 > 宽）时把舞台旋转 90°，让16:9 横屏内容铺满整块屏幕。
+    // 旋转后可用空间的"宽/高"相当于交换了 vw/vh。
+    const portrait = vh > vw;
+    const stage = this.canvas.parentElement;
+    if (stage && stage.id === "stage") {
+      document.body.classList.toggle("rotate", portrait);
+    }
+    // 计算可用空间：旋转时用交换后的尺寸
+    const availW = portrait ? vh : vw;
+    const availH = portrait ? vw : vh;
+
+    const scale = Math.min(availW / this.width, availH / this.height);
     this.scale = scale;
     this.canvas.width = this.width;
     this.canvas.height = this.height;

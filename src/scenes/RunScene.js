@@ -220,9 +220,9 @@ export class RunScene extends Scene {
 
     this.bg.update(dt, this.speed);
     this.player.update(dt, input);
-    if (input.pointer.justDown) {
-      this.player.switchLane(input.pointer.y < this.game.height / 2 ? 0 : 1);
-    }
+    // 触摸滑动切轨：上滑→上轨，下滑→下轨（全屏任意位置有效）
+    if (input.swipeUp) this.player.switchLane(0);
+    else if (input.swipeDown) this.player.switchLane(1);
     this.spawner.update(dt, this.speed, this.elapsed);
     this.particles.update(dt);
 
@@ -247,6 +247,7 @@ export class RunScene extends Scene {
     if (range <= 0) return;
     for (const e of this.spawner.entities) {
       if (e.type !== "orb" || e.dead) continue;
+      if (e.orbKind === "rarestar") continue; // 中间轨稀有物不受磁铁影响
       const dx = (this.player.x) - e.x;
       const dy = this.player.cy - (CONFIG.laneTopY[e.lane] + CONFIG.playerH / 2);
       const dist = Math.hypot(dx, dy);
@@ -321,6 +322,23 @@ export class RunScene extends Scene {
     const pR = this.player.x + this.player.w;
     for (const e of this.spawner.entities) {
       if (e.dead) continue;
+
+      // 稀有金色六芒星在中间轨(lane=-1)：切轨途中经过即可拾取
+      // 用玩家中心y 与中间线的竖直距离判定，配合水平重叠
+      if (e.orbKind === "rarestar") {
+        const overlapX = e.x < pR && e.x + e.w > pL;
+        const dy = Math.abs(this.player.cy - CONFIG.laneMidY);
+        if (overlapX && dy < 24) {
+          e.dead = true;
+          const doubleMul = 1 + this.stacks("double");
+          const val = CONFIG.rareStarValue * doubleMul;
+          this._gainTrial(val, e.x + e.w / 2, CONFIG.laneMidY, PALETTE.gold);
+          //拾取特效更华丽
+          this.particles.burst(e.x + e.w / 2, CONFIG.laneMidY, PALETTE.gold, 24, { speed: 170, life: 0.8, size: 3 });
+        }
+        continue;
+      }
+
       if (e.lane !== this.player.lane) continue;
       const overlap = e.x < pR && e.x + e.w > pL;
       if (!overlap) continue;

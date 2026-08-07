@@ -14,8 +14,34 @@
 <body>
   <div id="stage">
     <canvas id="game"></canvas>
-    <div id="hint">电脑: ↑↓切轨 / Enter · 手机: 点上/下半屏切轨 · 菜单商城可直接点</div>
+    <div id="hint">电脑: ↑↓ 切轨 / Enter · 手机: 上滑切上轨 / 下滑切下轨（全屏任意位置）· 菜单商城可直接点</div>
   </div>
-  <script type="module" src="./src/main.js?v=20260804"></script>
+  <div id="fsBtn" title="全屏">⛶</div>
+  <script>
+    // 全屏支持：点击按钮进入/退出全屏（移动端横屏全屏体验）
+    (function () {
+      const btn = document.getElementById("fsBtn");
+      function isFs() { return document.fullscreenElement || document.webkitFullscreenElement; }
+      function toggleFs() {
+        const el = document.documentElement;
+        if (!isFs()) {
+          const req = el.requestFullscreen || el.webkitRequestFullscreen;
+          if (req) req.call(el);
+          // 尝试锁定为横屏（部分移动端支持）
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock("landscape").catch(() => {});
+          }
+        } else {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (exit) exit.call(document);
+        }
+      }
+      btn.addEventListener("click", toggleFs);
+      document.addEventListener("fullscreenchange", () => {
+        btn.textContent = isFs() ? "🗕" : "⛶";
+      });
+    })();
+  </script>
+  <script type="module" src="./src/main.js?v=20260807"></script>
 </body>
 </html>

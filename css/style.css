@@ -28,6 +28,15 @@ html, body {
   align-items: center;
   justify-content: center;
   position: relative;
+  transform-origin: center center;
+}
+
+/* 竖屏时旋转整块舞台 90°，实现"横屏铺满"的全屏体验。
+   用 100vh/100vw 交换宽高，使旋转后正好填满可视区域。 */
+body.rotate #stage {
+  width: 100vh;
+  height: 100vw;
+  transform: rotate(90deg);
 }
 
 #game {
@@ -44,9 +53,50 @@ html, body {
   bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
+  width: 92%;
+  max-width: 900px;
+  text-align: center;
   color: rgba(185, 107, 255, 0.55);
   font-size: 12px;
   letter-spacing: 1px;
+  line-height: 1.4;
   user-select: none;
   pointer-events: none;
+  white-space: normal;/* 允许换行，避免小屏文字被截断/重叠 */
 }
+
+/* 竖屏旋转时，提示条也跟随旋转并贴到画面底部，避免与画布重叠 */
+body.rotate #hint {
+  bottom: auto;
+  left: auto;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%) rotate(90deg);
+  transform-origin: right center;
+  width: 80vh;
+}
+
+/* 小屏进一步缩小提示字号，防止重叠 */
+@media (max-width: 560px) {
+  #hint { font-size: 10px; letter-spacing: 0.5px; }
+}
+
+/* 全屏按钮：右上角悬浮，点击进入/退出全屏 */
+#fsBtn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 50;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(185, 107, 255, 0.5);
+  border-radius: 8px;
+  background: rgba(20, 10, 31, 0.6);
+  color: var(--neon);
+  font-size: 16px;
+  line-height: 34px;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#fsBtn:active { background: rgba(185, 107, 255, 0.25); }

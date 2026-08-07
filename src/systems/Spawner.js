@@ -17,18 +17,26 @@ export class Spawner {
   reset() {
     this.entities.length = 0;
     this.timer = 0;
-    this.interval = CONFIG.spawnStart;
+    this.interval = this._nextInterval(0);
   }
 
-  update(dt, speed, elapsed) {
-    this.interval = Math.max(
+  // 计算下一次生成的间隔：基准随时间缩短，再叠加大幅随机抖动 → 分布不均匀
+  _nextInterval(elapsed) {
+    const base = Math.max(
       CONFIG.spawnMin,
       CONFIG.spawnStart - elapsed * CONFIG.spawnRampSpeed
     );
+    // 抖动系数：在 [1-jitter, 1+jitter] 间随机，制造疏密不均的节奏
+    const j = CONFIG.spawnJitter;
+    const factor = 1 - j + Math.random() * (j * 2);
+    return base * factor;
+  }
 
+  update(dt, speed, elapsed) {
     this.timer += dt;
     if (this.timer >= this.interval) {
       this.timer = 0;
+      this.interval = this._nextInterval(elapsed);
       this._spawn();
     }
 
@@ -37,9 +45,24 @@ export class Spawner {
   }
 
   _spawn() {
-    const lane = Math.random() < 0.5 ? 0 : 1;
     const spawnX = 500;
+
+    // 稀有金色六芒星：中间轨（laneMidY）漂浮，概率很低，独立于常规生成
+    if (Math.random() < CONFIG.rareStarChance) {
+      this.entities.push(this._makeRareStar(spawnX));
+    }
+
+    // 空档喘息：本次不生成障碍/收集物，制造节奏留白
+    if (Math.random() < CONFIG.gapChance) return;
+
+    const lane = Math.random() < 0.5 ? 0 : 1;
     const orbChance = Math.min(0.85, CONFIG.orbChance + this.orbBonus);
+
+    // 成组生成：让密度忽高忽低，进一步打破规律
+    if (Math.random() < CONFIG.burstChance) {
+      this._spawnBurst(lane, spawnX, orbChance);
+      return;
+    }
 
     if (Math.random() < orbChance) {
       this.entities.push(this._makeOrb(lane, spawnX));
@@ -48,6 +71,24 @@ export class Spawner {
       if (Math.random() < CONFIG.pairOrbChance) {
         this.entities.push(this._makeOrb(lane === 0 ? 1 : 0, spawnX + 4));
       }
+    }
+  }
+
+  // 成组：要么一串同轨收集物，要么两三个错落障碍，间距随机
+  _spawnBurst(lane, x, orbChance) {
+    const count = 2 + Math.floor(Math.random() * 2); // 2~3 个
+    let cursor = x;
+    const asOrbs = Math.random() < orbChance;
+    for (let i = 0; i < count; i++) {
+      const gap = 26 + Math.random() * 40; // 组内间距不均
+      if (asOrbs) {
+        this.entities.push(this._makeOrb(lane, cursor));
+      } else {
+        // 障碍成组时在两轨间交替，避免必死组合
+        const ln = i % 2 === 0 ? lane : (lane === 0 ? 1 : 0);
+        this.entities.push(this._makeObstacle(ln, cursor));
+      }
+      cursor += gap;
     }
   }
 
@@ -67,11 +108,28 @@ export class Spawner {
     };
   }
 
+  // 稀有金色六芒星：漂浮在上下轨中间线，价值高。lane=-1 表示"中间轨"
+  _makeRareStar(x) {
+    return {
+      type: "orb",
+      orbKind: "rarestar",
+      lane: -1,
+      x, w: 18, h: 18, dead: false,
+      t: Math.random() * 6,
+    };
+  }
+
+  // 取实体中心 y（中间轨用 laneMidY）
+  _centerY(e) {
+    if (e.lane === -1) return CONFIG.laneMidY;
+    return CONFIG.laneTopY[e.lane] + CONFIG.playerH / 2;
+  }
+
   render(ctx, time) {
     const ob = this.obSkin;
     for (const e of this.entities) {
-      const topY = CONFIG.laneTopY[e.lane];
       if (e.type === "obstacle") {
+        const topY = CONFIG.laneTopY[e.lane];
         const y = topY + (CONFIG.playerH - e.h);
         ctx.fillStyle = ob.fill;
         ctx.fillRect(Math.round(e.x), Math.round(y), e.w, e.h);
@@ -85,15 +143,47 @@ export class Spawner {
         ctx.fillRect(Math.round(e.x) + 3, Math.round(y) + 3, e.w - 6, 2);
       } else {
         const cx = e.x + e.w / 2;
-        const cy = topY + CONFIG.playerH / 2;
+        const cy = this._centerY(e);
         const pulse = 1 + Math.sin((time + e.t) * 6) * 0.15;
         if (e.orbKind === "potion") {
           this._drawPotion(ctx, cx, cy, pulse);
+        } else if (e.orbKind === "rarestar") {
+          this._drawRareStar(ctx, cx, cy, pulse, time + e.t);
         } else {
           this._drawStar(ctx, cx, cy, pulse, time + e.t);
         }
       }
     }
+  }
+
+  // 稀有金色六芒星：两枚交叠三角构成的六芒星 + 强光晕，明显区别于普通星星
+  _drawRareStar(ctx, cx, cy, pulse, phase) {
+    const R = 10 * pulse;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(phase * 0.6);
+    ctx.fillStyle = PALETTE.gold;
+    ctx.shadowColor = PALETTE.gold;
+    ctx.shadowBlur = 16;
+    for (let tri = 0; tri < 2; tri++) {
+      ctx.beginPath();
+      const off = tri * Math.PI; // 第二个三角旋转 180°
+      for (let i = 0; i < 3; i++) {
+        const a = off + (i / 3) * Math.PI * 2 - Math.PI / 2;
+        const px = Math.cos(a) * R;
+        const py = Math.sin(a) * R;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+    // 中心亮点
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.beginPath();
+    ctx.arc(0, 0, R * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
   }
 
   // 魔法星星：金色五角星

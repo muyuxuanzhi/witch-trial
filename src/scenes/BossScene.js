@@ -80,6 +80,10 @@ export class BossScene extends Scene {
     this.starInterval = Math.max(2.2, 4.5 - (this.starLuck || 0) * 0.4);   // 幸运越高越勤
     this.starCollected = 0;    // 已收集数量
     this.powerT = 0;           // 六芒星增益（火力狂暴）剩余时间
+    // 地狱难度：六芒星出现频率大幅降低——整局只出现一次
+    this.hellStarOnce = !!this.diff.bossLifeMode;
+    this.hellStarSpawned = false;      // 是否已生成过那唯一一次
+    this.hellStarDelay = 8+ Math.random() * 6; // 战斗开始 8~14s 后出现
 
     this.state = "fight";// fight | win | lose | paused
     this.t = 0;
@@ -184,20 +188,23 @@ export class BossScene extends Scene {
 
   _updateStars(dt) {
     const W = this.game.width, H = this.game.height;
-    // 定期生成：从 Boss 附近向左飘出
-    this.starSpawnT += dt;
-    if (this.starSpawnT >= this.starInterval) {
-      this.starSpawnT = 0;
-      this.stars.push({
-        x: this.bx - 20,
-        y: 60 + Math.random() * (H - 120),
-        vx: -(46 + Math.random() * 24),
-        vy: (Math.random() - 0.5) * 30,
-        r: 10,
-        spin: 0,
-        life: 12,
-        dead: false,
-      });
+    // 生成逻辑：
+    // - 地狱难度：整局只出现一次（延迟一段时间后生成，之后不再生成）
+    // - 普通难度：按 starInterval 周期性生成
+    if (this.hellStarOnce) {
+      if (!this.hellStarSpawned) {
+        this.starSpawnT += dt;
+        if (this.starSpawnT >= this.hellStarDelay) {
+          this.hellStarSpawned = true;
+          this._spawnStar();
+        }
+      }
+    } else {
+      this.starSpawnT += dt;
+      if (this.starSpawnT >= this.starInterval) {
+        this.starSpawnT = 0;
+        this._spawnStar();
+      }
     }
     const p = this.player;
     for (const s of this.stars) {
@@ -217,6 +224,21 @@ export class BossScene extends Scene {
       }
     }
     this.stars = this.stars.filter((s) => !s.dead);
+  }
+
+  _spawnStar() {
+    const H = this.game.height;
+    this.stars.push({
+      x: this.bx - 20,
+      y: 60 + Math.random() * (H - 120),
+      vx: -(46 + Math.random() * 24),
+      vy: (Math.random() - 0.5) * 30,
+      r: 10,
+      spin: 0,
+      // 地狱唯一星停留更久，给玩家足够时间接住
+      life: this.hellStarOnce ? 18 : 12,
+      dead: false,
+    });
   }
 
   // 收集六芒星：回血 + 触发短暂火力狂暴（地狱难度额外给短暂无敌）
