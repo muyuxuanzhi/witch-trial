@@ -25,6 +25,10 @@ export const CONFIG = {
   gapChance: 0.14,       // 触发"空档喘息"（本次不生成任何东西）的概率
   rareStarChance: 0.06,  // 中间轨稀有金色六芒星的生成概率（每次生成判定）
   rareStarValue: 300,    // 稀有金色六芒星的试炼值
+  obstacleW: 16,         // 普通障碍宽度
+  burstObstacleW: 9,     // 成组障碍宽度（更细，便于连续躲避）
+  burstGapMin: 62,       // 成组障碍最小水平间距（保证有反应/切轨时间）
+  hitboxInset: 4,        // 玩家碰撞判定水平内缩（视觉不变，判定更宽松）
 
   // 手感
   hitStop: 0.12,         // 碰撞顿帧时长

@@ -59,6 +59,21 @@ export class BossScene extends Scene {
     // 幸运：略微提升六芒星生成频率
     this.starLuck = (B.lucky || 0);
 
+    // 星辰牵引：每层召唤一颗跟随玩家的绿色小星星，在 Boss 战协同攻击
+    // （伤害约为玩家单发的 0.5 倍）
+    this.companions = [];
+    const magnetLv = B.magnet || 0;
+    for (let i = 0; i < magnetLv; i++) {
+      this.companions.push({
+        // 环绕玩家的相位/半径，营造"跟随"感
+        ang: (Math.PI * 2 * i) / Math.max(1, magnetLv),
+        orbitR: 26 + i * 6,
+        x: this.player.x, y: this.player.y,
+        fireCd: 0.5 + i * 0.15, // 错开开火节奏
+        spin: 0,
+      });
+    }
+
     // Boss 状态（右侧）  地狱难度：血量 ×3
     this.bhp = Math.max(20, Math.round(this.boss.hp * BOSS_HP_SCALE * this.diff.bossHpMul));
     this.bMaxHp = this.bhp;
@@ -170,6 +185,9 @@ export class BossScene extends Scene {
    p.fireCd = this.weapon.cooldown / this.hasteMul * (this.powerT > 0 ? 0.5 : 1);
     }
 
+    // ===== 星辰牵引小星星：环绕玩家 + 协同开火 =====
+    this._updateCompanions(dt);
+
     // ===== Boss移动 =====
     this._updateBoss(dt);
 
@@ -280,6 +298,63 @@ export class BossScene extends Scene {
       this.playerBullets.push(mk(w.bulletSpeed, 0, true));
     }
     this.particles.burst(bx, by, w.color, 4, { speed: 60, life: 0.2, size: 2 });
+  }
+
+  // 星辰牵引小星星：绕玩家旋转跟随；持续向Boss 发射绿色小弹（0.5 倍玩家伤害）
+  _updateCompanions(dt) {
+    if (!this.companions || !this.companions.length) return;
+    const p = this.player;
+    const w = this.weapon;
+    // 单发基础伤害（含 buff 与狂暴），星星取其一半
+    const baseDmg = w.damage * PLAYER_DMG_SCALE * this.dmgBuffMul * (this.powerT > 0 ? 2 : 1);
+    const starDmg = baseDmg * 0.5;
+    const interval = (this.weapon.cooldown / this.hasteMul) * (this.powerT > 0 ? 0.5 : 1) * 1.3; // 略慢于玩家
+    for (const c of this.companions) {
+      c.ang += dt * 2.4;
+      c.spin += dt * 3;
+      // 平滑跟随到环绕位置
+      const tx = p.x + Math.cos(c.ang) * c.orbitR;
+      const ty = p.y + Math.sin(c.ang) * (c.orbitR * 0.6);
+      c.x += (tx - c.x) * Math.min(1, 10 * dt);
+      c.y += (ty - c.y) * Math.min(1, 10 * dt);
+      // 开火
+      c.fireCd -= dt;
+      if (c.fireCd <= 0) {
+        c.fireCd = interval;
+        this.playerBullets.push({
+          x: c.x, y: c.y,
+          vx: w.bulletSpeed * 0.95, vy: 0,
+          r: 3, dmg: starDmg, color: "#5cff9a",
+          homing: false, dead: false, fromCompanion: true,
+        });
+        this.particles.burst(c.x, c.y, "#5cff9a", 3, { speed: 50, life: 0.18, size: 2 });
+      }
+    }
+  }
+
+  _renderCompanions(ctx) {
+    if (!this.companions || !this.companions.length) return;
+    for (const c of this.companions) {
+      ctx.save();
+      ctx.translate(Math.round(c.x), Math.round(c.y));
+      ctx.rotate(c.spin);
+      ctx.fillStyle = "#5cff9a";
+      ctx.shadowColor = "#5cff9a";
+      ctx.shadowBlur = 8;
+      // 简易五角星
+      const R =5, r = 2.2;
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const rad = i % 2 === 0 ? R : r;
+        const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+        const px = Math.cos(a) * rad, py = Math.sin(a) * rad;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
   }
 
   _updateBoss(dt) {
@@ -520,6 +595,8 @@ if (this.endless) {
 
     // 玩家
     this._renderPlayer(ctx);
+    // 星辰牵引小星星（跟随玩家）
+    this._renderCompanions(ctx);
 
     this.particles.render(ctx);
 

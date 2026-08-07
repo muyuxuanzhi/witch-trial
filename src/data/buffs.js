@@ -24,12 +24,12 @@ export const BUFFS = [
     color: "#4fe0d0",
     desc: "受伤减半（每层再减，扣除更少试炼值）",
   },
-{
+  {
     id: "magnet",
     name: "星辰牵引",
-  icon: "◆",
-    color: "#b96bff",
-    desc: "自动吸附邻近收集物（每层范围更大）",
+    icon: "★",
+    color: "#5cff9a",
+    desc: "召唤跟随的绿色小星星，Boss战协同攻击（伤害约为你的一半，可叠加）",
   },
   {
     id: "haste",

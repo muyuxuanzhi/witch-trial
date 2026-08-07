@@ -74,27 +74,27 @@ export class Spawner {
     }
   }
 
-  // 成组：要么一串同轨收集物，要么两三个错落障碍，间距随机
+  // 成组：一串收集物，或一串"细障碍"。障碍成组时全部集中在同一条轨道，
+  // 另一轨保持畅通，保证玩家切轨即可安全通过；障碍更细、间距更大，留足反应时间。
   _spawnBurst(lane, x, orbChance) {
     const count = 2 + Math.floor(Math.random() * 2); // 2~3 个
     let cursor = x;
     const asOrbs = Math.random() < orbChance;
     for (let i = 0; i < count; i++) {
-      const gap = 26 + Math.random() * 40; // 组内间距不均
       if (asOrbs) {
         this.entities.push(this._makeOrb(lane, cursor));
+        cursor += 26 + Math.random() * 40; // 收集物间距可较随意
       } else {
-        // 障碍成组时在两轨间交替，避免必死组合
-        const ln = i % 2 === 0 ? lane : (lane === 0 ? 1 : 0);
-        this.entities.push(this._makeObstacle(ln, cursor));
+        this.entities.push(this._makeObstacle(lane, cursor, true)); // 细障碍
+        cursor += CONFIG.burstGapMin + Math.random() * 34; // 障碍间距更大
       }
-      cursor += gap;
     }
   }
 
-  _makeObstacle(lane, x) {
+  _makeObstacle(lane, x, slim = false) {
     const h = 20 + Math.floor(Math.random() * 10);
-    return { type: "obstacle", lane, x, w: 16, h, dead: false };
+    const w = slim ? CONFIG.burstObstacleW : CONFIG.obstacleW;
+    return { type: "obstacle", lane, x, w, h, dead: false };
   }
 
   _makeOrb(lane, x) {

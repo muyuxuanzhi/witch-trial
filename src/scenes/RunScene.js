@@ -226,7 +226,6 @@ export class RunScene extends Scene {
     this.spawner.update(dt, this.speed, this.elapsed);
     this.particles.update(dt);
 
-    this._applyMagnet(dt);
     this._checkCollisions();
     this._updateSmashRings(dt);
 
@@ -240,22 +239,6 @@ export class RunScene extends Scene {
       s.r += 260 * dt; // 快速扩张
     }
     this.smashRings = this.smashRings.filter((s) => s.life > 0);
-  }
-
-  _applyMagnet(dt) {
-    const range = this.stacks("magnet") * 26;
-    if (range <= 0) return;
-    for (const e of this.spawner.entities) {
-      if (e.type !== "orb" || e.dead) continue;
-      if (e.orbKind === "rarestar") continue; // 中间轨稀有物不受磁铁影响
-      const dx = (this.player.x) - e.x;
-      const dy = this.player.cy - (CONFIG.laneTopY[e.lane] + CONFIG.playerH / 2);
-      const dist = Math.hypot(dx, dy);
-      if (dist < range + 40) {
-        e.x += dx * Math.min(1, 6 * dt);
-        e.lane = this.player.lane;
-      }
-    }
   }
 
   _takeBuff(buff) {
@@ -318,8 +301,13 @@ export class RunScene extends Scene {
   }
 
   _checkCollisions() {
+    // 收集物用玩家全宽判定（拾取手感好）；障碍判定水平内缩，视觉不变但更宽松，
+    // 避免"看起来能过却被判定撞上"，尤其是成组细障碍。
+    const inset = CONFIG.hitboxInset;
     const pL = this.player.x;
     const pR = this.player.x + this.player.w;
+    const hL = pL + inset;
+    const hR = pR - inset;
     for (const e of this.spawner.entities) {
       if (e.dead) continue;
 
@@ -340,10 +328,9 @@ export class RunScene extends Scene {
       }
 
       if (e.lane !== this.player.lane) continue;
-      const overlap = e.x < pR && e.x + e.w > pL;
-      if (!overlap) continue;
 
       if (e.type === "orb") {
+        if (!(e.x < pR && e.x + e.w > pL)) continue;
         e.dead = true;
         const doubleMul = 1 + this.stacks("double");
         const base = e.orbKind === "potion" ? CONFIG.potionValue : CONFIG.starValue;
@@ -351,6 +338,7 @@ export class RunScene extends Scene {
         const color = e.orbKind === "potion" ? PALETTE.cyan : PALETTE.gold;
         this._gainTrial(val, e.x + e.w / 2, this.player.cy, color);
       } else {
+        if (!(e.x < hR && e.x + e.w > hL)) continue;
         this._hitObstacle(e);
         break;
       }
