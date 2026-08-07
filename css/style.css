@@ -61,22 +61,6 @@ html, body {
   #hint { font-size: 10px; letter-spacing: 0.5px; }
 }
 
-/* ===== 固定横屏：手机竖着拿时，用 CSS 把整个舞台顺时针旋转 90°，
-   让 16:9 横屏内容自动铺满整块竖屏，无需玩家手动转手机。
-   仅在 body.forceLandscape（由 JS 在竖屏移动设备时添加）时启用。
-   canvas 的触摸坐标反变换在 Input.js 中对应处理。 ===== */
-body.forceLandscape #stage {
-  position: fixed;
-  top: 0;
-  left: 0;
-  /* 旋转后宽高互换：容器宽=视口高，容器高=视口宽 */
-  width: 100vh;
-  height: 100vw;
-  transform-origin: top left;
-  /* 顺时针旋转 90° 后平移回可视区域 */
-  transform: translateX(100vw) rotate(90deg);
-}
-
 /* 全屏按钮：右上角悬浮，点击进入/退出全屏 */
 #fsBtn {
   position: fixed;

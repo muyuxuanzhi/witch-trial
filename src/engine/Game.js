@@ -32,20 +32,12 @@ export class Game {
   }
 
   _resize() {
+    // 自适应缩放：canvas 按当前视口等比缩放并居中，坐标一律直接映射。
+    // 不做任何 CSS 旋转 / 遮罩，避免坐标错乱与鼠标被挡。
+    // 手机横过来即自然铺满 16:9；竖着拿画面缩小居中，仍可玩。
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    // 固定横屏：竖屏(高>宽)时用 CSS 把 #stage 旋转 90° 铺满整块竖屏。
-    // 旋转后可用空间的"宽/高"相当于交换 vw/vh。
-    const portrait = vh > vw;
-    document.body.classList.toggle("forceLandscape", portrait);
-    // 记录旋转状态供 Input 做坐标反变换
-    this.rotated = portrait;
-
-    // 计算可用空间：旋转时用交换后的尺寸（容器宽=vh，容器高=vw）
-    const availW = portrait ? vh : vw;
-    const availH = portrait ? vw : vh;
-
-    const scale = Math.min(availW / this.width, availH / this.height);
+    const scale = Math.min(vw / this.width, vh / this.height);
     this.scale = scale;
     this.canvas.width = this.width;
     this.canvas.height = this.height;
