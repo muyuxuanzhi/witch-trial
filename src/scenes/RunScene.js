@@ -18,6 +18,7 @@ import { getSkin } from "../data/skins.js";
 import { rollChoices } from "../data/buffs.js";
 import { getFormByTrial, getNextForm, WITCH_FORMS } from "../data/witchForms.js";
 import { getLevel, levelBgSkin } from "../data/levels.js";
+import { Difficulty } from "../data/difficulty.js";
 import { MenuScene } from "./MenuScene.js";
 
 const FINAL_FORM_ID = WITCH_FORMS[WITCH_FORMS.length - 1].id;
@@ -72,6 +73,10 @@ export class RunScene extends Scene {
       this.roundBase = 0;
   }
 
+    // ===== 难度：地狱模式生命制 =====
+    this.diff = Difficulty.get();
+    this.hitsTaken = 0;   // 已受击次数（地狱生命制用）
+
     this.state = "run";      // run | choose | dead | paused | goal
     this.shake = 0;
     this.hitStop = 0;
@@ -88,6 +93,15 @@ export class RunScene extends Scene {
   get hi() { return this.save.hi; }
   get score() { return Math.floor(this.distance) + this.totalTrial; }
   stacks(id) { return this.buffs[id] || 0; }
+
+  // 地狱难度：最大可承受撞击数= 基础命数 × 2^(破障魔法层数)
+  // 破障魔法【smash】在地狱下效果改变：每拾取一层耐撞翻倍(3→6→12)
+  get maxLives() {
+    if (!this.diff.runLifeMode) return Infinity;
+    const smash = this.diff.smashDoubleEndurance ? this.stacks("smash") : 0;
+    return this.diff.runLives * Math.pow(2, smash);
+  }
+  get lives() { return this.maxLives - this.hitsTaken; }
 
   _deadButtons() {
     const W = this.game.width, H = this.game.height;
@@ -328,6 +342,24 @@ export class RunScene extends Scene {
   _hitObstacle(e) {
     if (this.player.invuln > 0) return;
 
+    // ===== 地狱难度：生命制（撞满 maxLives 次即死）=====
+    // 破障魔法在地狱下不再"直接碾压"，而是把耐撞上限翻倍(见 maxLives)
+    if (this.diff.runLifeMode) {
+      e.dead = true;
+      this.hitsTaken++;
+      this.player.hit();
+      this.hitStop = CONFIG.hitStop;
+      this.shake = CONFIG.shakeOnHit;
+      this.particles.burst(this.player.cx, this.player.cy, PALETTE.danger, 18, { speed: 130, life: 0.6, size: 3 });
+      // 小幅扣试炼值（不为负）
+      const guardMul = Math.pow(0.5, this.stacks("guard"));
+      this.trial = Math.max(0, this.trial - Math.round(CONFIG.hitPenalty * guardMul));
+      if (this.hitsTaken >= this.maxLives) {
+        this._die();
+      }
+      return;
+    }
+
     const smash = this.stacks("smash");
     if (smash > 0) {
       e.dead = true;
@@ -501,6 +533,21 @@ export class RunScene extends Scene {
     }
     ctx.fillStyle = "rgba(233,220,255,0.7)";
     ctx.fillText(`形态 ${this.player.form.name}`, 10, 34);
+
+    //地狱难度：血量爱心显示（撞 maxLives 次即死）
+    if (this.diff.runLifeMode) {
+      const lives = this.lives, max = this.maxLives;
+      let hx = 10, hy = 48;
+      ctx.font = "11px monospace";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = this.diff.color;
+      ctx.fillText("🔥", hx, hy);
+      hx += 16;
+      for (let i = 0; i < max; i++) {
+        ctx.fillStyle = i < lives ? "#ff5c8a" : "rgba(120,80,100,0.5)";
+        ctx.fillText(i < lives ? "♥" : "♡", hx + i * 11, hy);
+      }
+    }
 
     ctx.fillStyle = "rgba(255,207,92,0.85)";
     ctx.textAlign = "right";

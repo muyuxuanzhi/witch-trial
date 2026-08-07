@@ -6,6 +6,7 @@ import { Save } from "../systems/Save.js";
 import { getSkin } from "../data/skins.js";
 import { LevelSelectScene } from "./LevelSelectScene.js";
 import { ShopScene } from "./ShopScene.js";
+import { Difficulty, DIFF_ORDER, getDifficulty } from "../data/difficulty.js";
 
 export class MenuScene extends Scene {
   constructor(game) {
@@ -13,13 +14,23 @@ export class MenuScene extends Scene {
     this.t = 0;
     this.save = Save.load();
     this.bg = new Background(game.width, game.height, getSkin("background", this.save.equipped.background));
-    this.items = ["开始试炼", "商城"];
+    //菜单项：难度为可切换项（左右/点击循环）
+    this.items = ["开始试炼", "图鉴", "商城", "难度"];
     this.sel = 0;
+    this.diffId = Difficulty.load();
   }
 
   onEnter() {
     this.save = Save.load();
     this.bg.setSkin(getSkin("background", this.save.equipped.background));
+    this.diffId = Difficulty.load();
+  }
+
+  _cycleDifficulty(dir = 1) {
+    const idx = DIFF_ORDER.indexOf(this.diffId);
+    const next = (idx + dir + DIFF_ORDER.length) % DIFF_ORDER.length;
+    this.diffId = DIFF_ORDER[next];
+    Difficulty.save(this.diffId);
   }
 
   _itemRects() {
@@ -29,7 +40,11 @@ export class MenuScene extends Scene {
 
   _activate(i) {
     if (i === 0) this.game.changeScene(new LevelSelectScene(this.game));
-    else this.game.changeScene(new ShopScene(this.game));
+    else if (i === 1) {
+      import("./CodexScene.js").then((m) => this.game.changeScene(new m.CodexScene(this.game)));
+    }
+    else if (i === 2) this.game.changeScene(new ShopScene(this.game));
+    else if (i === 3) this._cycleDifficulty(1); // 难度项：确认即切换
   }
 
   update(dt, input) {
@@ -38,6 +53,11 @@ export class MenuScene extends Scene {
 
     if (input.justPressed("arrowup", "w")) this.sel = (this.sel + this.items.length - 1) % this.items.length;
     if (input.justPressed("arrowdown", "s")) this.sel = (this.sel + 1) % this.items.length;
+    // 选中难度项时，左右键切换难度
+    if (this.sel === 3) {
+      if (input.justPressed("arrowleft", "a")) this._cycleDifficulty(-1);
+      if (input.justPressed("arrowright", "d")) this._cycleDifficulty(1);
+    }
     if (input.justPressed("enter", " ")) this._activate(this.sel);
 
     // 触屏：直接点击菜单项
@@ -71,18 +91,28 @@ export class MenuScene extends Scene {
 
     const rects = this._itemRects();
     ctx.font = "14px monospace";
+    const curDiff = getDifficulty(this.diffId);
     for (let i = 0; i < this.items.length; i++) {
       const r = rects[i];
       const on = i === this.sel;
+      // 难度项：显示 "难度：◄ 地狱 ►"
+      let label = this.items[i];
+      if (i === 3) label = `难度  ◄ ${curDiff.icon}${curDiff.name} ►`;
       if (on) {
         ctx.fillStyle = "rgba(185,107,255,0.16)";
         ctx.fillRect(r.x, r.y, r.w, r.h);
-        ctx.fillStyle = PALETTE.gold;
-        ctx.fillText("▶  " + this.items[i] + "  ◀", W / 2, r.y + r.h / 2 + 1);
+        ctx.fillStyle = (i === 3) ? curDiff.color : PALETTE.gold;
+        ctx.fillText((i === 3 ? "" : "▶  ") + label + (i === 3 ? "" : "  ◀"), W / 2, r.y + r.h / 2 + 1);
       } else {
-        ctx.fillStyle = "rgba(233,220,255,0.6)";
-        ctx.fillText(this.items[i], W / 2, r.y + r.h / 2 + 1);
+        ctx.fillStyle = (i === 3) ? curDiff.color : "rgba(233,220,255,0.6)";
+        ctx.fillText(label, W / 2, r.y + r.h / 2 + 1);
       }
+    }
+    // 地狱难度说明
+    if (this.diffId === "hell") {
+      ctx.font = "8px monospace";
+      ctx.fillStyle = "rgba(255,120,120,0.75)";
+      ctx.fillText("🔥 三命定生死 · Boss 血量×3 · 破障魔法改为耐撞翻倍", W / 2, rects[3].y + rects[3].h + 12);
     }
 
     ctx.textAlign = "right";
@@ -97,7 +127,7 @@ export class MenuScene extends Scene {
     ctx.textBaseline = "middle";
     ctx.fillStyle = "rgba(233,220,255,0.45)";
     ctx.font = "8px monospace";
-    ctx.fillText("↑↓ / 点击 选择 · Enter 确认", W / 2, H * 0.9);
+    ctx.fillText("↑↓选择 · ←→ 切换难度 · Enter 确认", W / 2, H * 0.9);
     ctx.textAlign = "left";
   }
 }

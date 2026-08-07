@@ -9,6 +9,7 @@ import { PALETTE } from "../engine/Game.js";
 import { Particles } from "../systems/Particles.js";
 import { Save } from "../systems/Save.js";
 import { getLevelBoss, getLevel, TOTAL_LEVELS } from "../data/levels.js";
+import { Difficulty } from "../data/difficulty.js";
 import { MenuScene } from "./MenuScene.js";
 
 // 全局难度系数（肉鸽爽游：玩家肉、能连续输出，Boss 耐打能撑30秒+、弹幕稀疏好躲）
@@ -31,22 +32,26 @@ export class BossScene extends Scene {
     this.save = Save.load();
     this.boss = getLevelBoss(level);
     this.particles = new Particles();
+    // ===== 难度 =====
+    this.diff = Difficulty.get();
 
     const W = game.width, H = game.height;
 
     // 玩家（左侧，纵向移动）
+    // 地狱难度：3 血制（开局三滴血），撞满即败；普通：长血条 40。
+    const baseHp = this.diff.bossLifeMode ? this.diff.bossLives : PLAYER_MAX_HP;
     this.player = {
       x: 46, y: H / 2, w: 18, h: 16,
-    hp: PLAYER_MAX_HP, maxHp: PLAYER_MAX_HP,
+    hp: baseHp, maxHp: baseHp,
       speed: 210,
  invuln: 0,
       fireCd: 0,
     };
     // ===== Buff 属性叠加进 Boss 战（无限模式下随轮次不断变强）=====
     const B = (carry && carry.buffs) || {};
-  // 护盾结界：受伤减半 → 换算成更多血量
+  // 护盾结界：受伤减半 → 换算成更多血量（地狱 3 血制下不加血，保持生死张力）
     const guard = B.guard || 0;
-    if (guard > 0) { this.player.maxHp += guard * 4; this.player.hp += guard * 4; }
+    if (guard > 0 && !this.diff.bossLifeMode) { this.player.maxHp += guard * 4; this.player.hp += guard * 4; }
     // 迅捷：射速加成（每层 +8%，boss 战体现为冷却缩短）
     this.hasteMul = 1 + (B.haste || 0) * 0.08;
     // 双倍/破障：转化为额外伤害倍率（每层 +12%）
@@ -54,8 +59,8 @@ export class BossScene extends Scene {
     // 幸运：略微提升六芒星生成频率
     this.starLuck = (B.lucky || 0);
 
-    // Boss 状态（右侧）
-    this.bhp = Math.max(20, Math.round(this.boss.hp * BOSS_HP_SCALE));
+    // Boss 状态（右侧）  地狱难度：血量 ×3
+    this.bhp = Math.max(20, Math.round(this.boss.hp * BOSS_HP_SCALE * this.diff.bossHpMul));
     this.bMaxHp = this.bhp;
     this.bx = W - 70;
     this.by = H / 2;
@@ -214,14 +219,18 @@ export class BossScene extends Scene {
     this.stars = this.stars.filter((s) => !s.dead);
   }
 
-  // 收集六芒星：回血 + 触发短暂火力狂暴
+  // 收集六芒星：回血 + 触发短暂火力狂暴（地狱难度额外给短暂无敌）
   _collectStar() {
     const p = this.player;
     this.starCollected++;
-    // 回血（不超过上限）
-    p.hp = Math.min(p.maxHp, p.hp + 6);
+    // 回血：普通 +6；地狱 3 血制下最多回 1 滴（避免瞬间回满，无敌才是核心收益）
+    p.hp = Math.min(p.maxHp, p.hp + (this.diff.bossLifeMode ? 1 : 6));
     // 火力狂暴 5 秒（叠加时间）
     this.powerT = Math.min(12, this.powerT + 5);
+    // 地狱难度：拾取后短暂无敌
+    if (this.diff.starInvuln > 0) {
+      p.invuln = Math.max(p.invuln, this.diff.starInvuln);
+    }
     this.particles.burst(p.x, p.y, "#ffd94a", 26, { speed: 180, life: 0.7, size: 3 });
     this.particles.burst(p.x, p.y, "#ffffff", 12, { speed: 120, life: 0.4, size: 2 });
   }
@@ -280,7 +289,8 @@ export class BossScene extends Scene {
     for (let i = 0; i < patterns.length; i++) {
       const pat = patterns[i];
       this.patTimers[i] += dt;
-      const interval = pat.interval * BOSS_INTERVAL_SCALE;
+      // 地狱难度：攻击频率加快（间隔缩短）
+      const interval = pat.interval * BOSS_INTERVAL_SCALE * this.diff.bossIntervalMul;
       if (this.patTimers[i] >= interval) {
         this.patTimers[i] = 0;
         this._emitPattern(pat);
@@ -290,7 +300,8 @@ export class BossScene extends Scene {
 
   _emitPattern(pat) {
     const ox = this.bx - this.bw / 2, oy = this.by;
-    const spd = pat.bulletSpeed * BOSS_BULLET_SPEED_SCALE;
+    // 地狱难度：弹速加快
+    const spd = pat.bulletSpeed * BOSS_BULLET_SPEED_SCALE * this.diff.bossBulletSpeedMul;
     const col = this.boss.color;
     const push = (vx, vy) => this.bossBullets.push({ x: ox, y: oy, vx, vy, r: 4, color: col, dead: false });
 
@@ -645,38 +656,55 @@ if (this.endless) {
     ctx.textAlign = "center"; ctx.textBaseline = "top";
     ctx.fillText(`${this.boss.name}  ${Math.max(0, Math.ceil(this.bhp))}/${this.bMaxHp}`, W / 2, by + bh + 2);
 
-    // 玩家血量（底部长血条，血多用条更清晰）
+    // 玩家血量（地狱：爱心命制；普通：长血条）
     const php = Math.max(0, this.player.hp);
-    const pratio = php / this.player.maxHp;
-    const pbw = 160, pbx = 10, pby = H - 16, pbh = 9;
-    ctx.fillStyle = "rgba(20,10,31,0.7)";
-    ctx.fillRect(pbx, pby, pbw, pbh);
-    // 血量颜色随比例变化
-    const hpColor = pratio > 0.5 ? "#5cff9a" : pratio > 0.25 ? PALETTE.gold : PALETTE.danger;
-    ctx.fillStyle = hpColor;
-    ctx.fillRect(pbx, pby, pbw * pratio, pbh);
-    ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 1;
-    ctx.strokeRect(pbx + 0.5, pby + 0.5, pbw - 1, pbh - 1);
-    ctx.fillStyle = PALETTE.text; ctx.font = "8px monospace";
-    ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText(`HP ${php}/${this.player.maxHp}`, pbx + pbw + 6, pby + pbh / 2 + 1);
+    const pbx = 10, pby = H - 16, pbw = 160, pbh = 9;
+    if (this.diff.bossLifeMode) {
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.font = "13px monospace";
+      ctx.fillStyle = this.diff.color;
+      ctx.fillText("🔥", pbx, pby + pbh / 2);
+      let hx = pbx + 18;
+      for (let i = 0; i < this.player.maxHp; i++) {
+        ctx.fillStyle = i < php ? "#ff5c8a" : "rgba(120,80,100,0.5)";
+        ctx.fillText(i < php ? "♥" : "♡", hx + i * 14, pby + pbh / 2);
+      }
+      // 无敌状态提示
+      if (this.player.invuln > 0) {
+        ctx.fillStyle = "#ffd94a"; ctx.font = "9px monospace";
+        ctx.fillText(`无敌 ${this.player.invuln.toFixed(1)}s`, hx + this.player.maxHp * 14 + 6, pby + pbh / 2 + 1);
+      }
+    } else {
+      const pratio = php / this.player.maxHp;
+      ctx.fillStyle = "rgba(20,10,31,0.7)";
+      ctx.fillRect(pbx, pby, pbw, pbh);
+      // 血量颜色随比例变化
+      const hpColor = pratio > 0.5 ? "#5cff9a" : pratio > 0.25 ? PALETTE.gold : PALETTE.danger;
+      ctx.fillStyle = hpColor;
+      ctx.fillRect(pbx, pby, pbw * pratio, pbh);
+      ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 1;
+      ctx.strokeRect(pbx + 0.5, pby + 0.5, pbw - 1, pbh - 1);
+      ctx.fillStyle = PALETTE.text; ctx.font = "8px monospace";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText(`HP ${php}/${this.player.maxHp}`, pbx + pbw + 6, pby + pbh / 2 + 1);
+    }
 
     // 武器名
     ctx.fillStyle = this.weapon.color; ctx.font = "9px monospace";
     ctx.textAlign = "right"; ctx.textBaseline = "bottom";
     ctx.fillText(`${this.weapon.icon} ${this.weapon.name}`, W - 10, H - 8);
 
-    // 六芒星收集数 + 狂暴状态
-    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    // 六芒星收集数 + 狂暴状态（顶部靠右，避免与底部血量/爱心重叠）
+    ctx.textAlign = "right"; ctx.textBaseline = "top";
     ctx.font = "10px monospace";
     ctx.fillStyle = "#ffd94a";
     ctx.shadowColor = "#ffd94a"; ctx.shadowBlur = this.powerT > 0 ? 6 : 0;
-    ctx.fillText(`✶六芒星 x${this.starCollected}`, pbx + pbw + 60, pby + pbh / 2 + 1);
+    ctx.fillText(`✶六芒星 x${this.starCollected}`, W - 30, by + bh + 2);
     ctx.shadowBlur = 0;
     if (this.powerT > 0) {
       ctx.fillStyle = "#ffd94a";
       ctx.font = "9px monospace";
-      ctx.fillText(`星辉狂暴 ${this.powerT.toFixed(1)}s`, pbx + pbw + 60, pby + pbh / 2 - 11);
+      ctx.fillText(`星辉狂暴 ${this.powerT.toFixed(1)}s`, W - 30, by + bh + 15);
     }
 
     // 暂停按钮
