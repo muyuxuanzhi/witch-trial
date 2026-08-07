@@ -17,16 +17,16 @@ export class IntroScene extends Scene {
     const lvName = this.level ? this.level.name : "";
     const bossName = this.level ? this.level.subtitle : "";
     this.lines = this.level ? (this.level.endless ? [
-      { who: "？？？", text: "♾ 无尽试炼" },
-      { who: "？？？", text: "Boss 随机降临，收集度与属性会一直叠加……" },
-      { who: "？？？", text: "看你能撑到第几轮，出发吧！" },
+      { who: "叶林", text: "♾ 无尽试炼……星光没有尽头呢。" },
+      { who: "叶林", text: "Boss 会一直降临，收集度与属性也会一直叠加……" },
+      { who: "叶林", text: "看我能撑到第几轮吧——出发！" },
     ] : [
-      { who: "？？？", text: `第${this.level.index}关 · ${lvName}` },
-      { who: "？？？", text: "你决定好了吗？" },
-   { who: "？？？", text: `那魔女试炼……${bossName}，就开始了！` },
+      { who: "叶林", text: `第${this.level.index}关 · ${lvName}` },
+      { who: "叶林", text: "呼……我准备好了。" },
+   { who: "叶林", text: `那……我的魔女试炼，${bossName}，现在开始！` },
     ]) : [
-      { who: "？？？", text: "你决定好了吗？" },
-      { who: "？？？", text: "那魔女试炼……就开始了！" },
+      { who: "叶林", text: "深呼吸……我准备好了。" },
+      { who: "叶林", text: "我的魔女试炼，现在开始！" },
     ];
     this.idx = 0;
     this.charT = 0;       // 打字机计时

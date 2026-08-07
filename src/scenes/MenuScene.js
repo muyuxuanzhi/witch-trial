@@ -65,6 +65,9 @@ export class MenuScene extends Scene {
     ctx.fillStyle = PALETTE.neon;
  ctx.font = "11px monospace";
     ctx.fillText("W I T C H   T R I A L", W / 2, H * 0.26 + 26);
+    ctx.fillStyle = "rgba(233,220,255,0.55)";
+    ctx.font = "9px monospace";
+    ctx.fillText("见习魔女 · 叶林", W / 2, H * 0.26 + 42);
 
     const rects = this._itemRects();
     ctx.font = "14px monospace";
