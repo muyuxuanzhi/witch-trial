@@ -87,6 +87,7 @@ export class IntroScene extends Scene {
     // 防止异步模块加载期间用户再次点击，重复触发切场景
     if (this._starting) return;
     this._starting = true;
+    this._loadT = 0;         // 加载计时，用于 render 显示"加载中"与超时兜底
     // 优先复用对话期间就已经在后台预取的 Promise（此时大概率已经加载完成，
     // 几乎瞬间进入下一场景）；如果预取失败了（或还没建立），才现场再 import 一次。
     const loader = this._runScenePromise || import("./RunScene.js");
@@ -100,6 +101,7 @@ export class IntroScene extends Scene {
         // 重置状态允许再次点击重试，并现场发起一次全新的 import。
         console.warn("[IntroScene] 进入关卡失败，可再次点击重试", e);
         this._starting = false;
+        this._loadT = 0;
         this._runScenePromise = null;
       });
   }
@@ -113,11 +115,30 @@ export class IntroScene extends Scene {
     // 刚切换进来的 0.25 秒内忽略任何点击 / 回车 / 空格，
     // 避免上一场景（菜单/选关/结算）的最后一次 tap 或回车被原样带入本场景
     // ——这正是"对话框出现瞬间立刻被当作下一句跳过"的根因。
-    if (!this._guardT) this._guardT = 0.25;
+    // 注意：用独立的初始化标记，而不是 `if (!this._guardT)`——否则守卫时间
+    // 递减到 0 后，下一帧 `!0` 为真会把守卫重新置回 0.25，造成反复重置。
+    if (this._guardT === undefined) this._guardT = 0.25;
     if (this._guardT > 0) this._guardT -= dt;
 
-    if (this._guardT <= 0 && !this._starting && (input.justPressed("enter", " ") || input.pointer.justDown)) {
+    // 触发源：键盘回车/空格 + canvas 指针按下 + 触摸轻触(tap) 三者任一。
+    // 手机上 pointerdown 偶尔不派发，tap 作为兜底，保证独白一定点得动。
+    const advanceInput = input.justPressed("enter", " ") || input.pointer.justDown || input.tap;
+    if (this._guardT <= 0 && !this._starting && advanceInput) {
       this._advance();
+    }
+
+    // ===== 加载超时兜底 =====
+    // 已经点击"开始试炼"进入加载态后，若 RunScene 迟迟没加载完（弱网/请求丢失），
+    // 4 秒后自动重置 _starting 并丢弃旧 Promise，允许玩家再点一次重新发起加载，
+    // 避免手机弱网下永久卡在独白最后一句。
+    if (this._starting) {
+      this._loadT = (this._loadT || 0) + dt;
+      if (this._loadT > 4) {
+        console.warn("[IntroScene] 加载超时，重置以便重试");
+        this._starting = false;
+        this._loadT = 0;
+        this._runScenePromise = null;
+      }
     }
   }
 
@@ -152,8 +173,15 @@ export class IntroScene extends Scene {
     ctx.font = "14px monospace";
     ctx.fillText(this._shownText(), 28, boxY + 30);
 
-    // 提示：闪烁的继续箭头
-    if (this._shownText().length >= this._curFullText().length) {
+    // 提示：进入加载态时显示"加载中"，否则显示闪烁的继续/开始箭头
+    if (this._starting) {
+      // 已点击开始试炼，正在加载 RunScene：给出明确反馈，避免被误认为"卡死点不动"
+      ctx.fillStyle = PALETTE.gold;
+      ctx.font = "12px monospace";
+      ctx.textAlign = "right";
+      const dots = ".".repeat(1 + (Math.floor(this.t * 2) % 3));
+      ctx.fillText("✦ 加载中" + dots, W - 28, boxY + boxH - 18);
+    } else if (this._shownText().length >= this._curFullText().length) {
       if (Math.floor(this.t * 2) % 2 === 0) {
         ctx.fillStyle = PALETTE.cyan;
         ctx.font = "12px monospace";

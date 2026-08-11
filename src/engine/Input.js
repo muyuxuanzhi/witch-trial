@@ -10,9 +10,15 @@ export class Input {
     // 滑动手势状态：swipeUp / swipeDown 为"本帧刚触发"的一次性标记
     this.swipeUp = false;
     this.swipeDown = false;
+    // 轻触（tap）：本帧刚发生一次"没有明显滑动"的手指抬起，作为独立于
+    // pointerdown 的兜底触发源。手机上 canvas 的 pointerdown 偶尔会因为
+    // 极小的手指位移/页面滚动拦截而不派发，导致"点了没反应"；用 touchend
+    // 判定 tap 可以稳定地补上这类点击，专门解决独白/对话点不动的问题。
+    this.tap = false;
     // 触摸追踪：记录起点，用于判定滑动方向与距离
     this._touch = { active: false, startX: 0, startY: 0, lastX: 0, lastY: 0, fired: false };
     this._swipeThreshold = 28; // 视口像素，达到即判定为一次滑动
+    this._tapMove = 16;        // 视口像素，抬手时位移小于此值判定为一次轻触
 
     window.addEventListener("keydown", (e) => {
       const k = e.key.toLowerCase();
@@ -69,7 +75,19 @@ export class Input {
         this._touch.fired = true;   // 一次滑动只触发一次
       }
     };
-    const onEnd = () => { this._touch.active = false; };
+    const onEnd = () => {
+      // 抬手时若整段触摸位移很小（没有明显滑动），判定为一次轻触 tap。
+      // 这是独立于 canvas pointerdown 的兜底点击源，专治手机上对话/独白
+      // "点了没反应"。仅在本次触摸未被判定为滑动时才触发。
+      if (this._touch.active && !this._touch.fired) {
+        const dx = this._touch.lastX - this._touch.startX;
+        const dy = this._touch.lastY - this._touch.startY;
+        if (Math.abs(dx) < this._tapMove && Math.abs(dy) < this._tapMove) {
+          this.tap = true;
+        }
+      }
+      this._touch.active = false;
+    };
 
     window.addEventListener("touchstart", onStart, { passive: true });
     window.addEventListener("touchmove", onMove, { passive: true });
@@ -96,6 +114,7 @@ export class Input {
     this.pointer.justDown = false;
     this.swipeUp = false;
     this.swipeDown = false;
+    this.tap = false;
   }
 
   // 场景切换时调用：清掉所有一次性触发标志位（按键刚按、指针刚按下、滑动刚触发），
@@ -108,6 +127,8 @@ export class Input {
     this.pointer.down = false;
     this.swipeUp = false;
     this.swipeDown = false;
+    this.tap = false;
+    this._touch.active = false;
     this._touch.fired = false;
   }
 }
