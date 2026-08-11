@@ -23,11 +23,8 @@ export class IntroScene extends Scene {
     ] : [
       { who: "叶林", text: `第${this.level.index}关 · ${lvName}` },
       { who: "叶林", text: "呼……我准备好了。" },
-      { who: "露娜", text: "叶林——通过试炼的话，10w 箱金箔坚果巧克力可是说定了哦？" },
       { who: "叶林", text: `那……我的魔女试炼，${bossName}，现在开始！` },
     ]) : [
-      { who: "露娜", text: "叶林——通过试炼的话，10w 箱金箔坚果巧克力可是说定了哦？" },
-      { who: "叶林", text: "为了金灿灿和甜品……power！！！" },
       { who: "叶林", text: "深呼吸……我准备好了。" },
       { who: "叶林", text: "我的魔女试炼，现在开始！" },
     ];
@@ -92,21 +89,21 @@ export class IntroScene extends Scene {
   }
 
   update(dt, input) {
-      this.t += dt;
-      this.charT += dt;
-      this.bg.update(dt, 40);
+    this.t += dt;
+    this.charT += dt;
+    this.bg.update(dt, 40);
 
-      // ===== 移动端衔接 Bug 修复 =====
-      // 刚切换进来的 0.25 秒内忽略任何点击 / 回车 / 空格，
-      // 避免上一场景（菜单/选关/结算）的最后一次 tap 或回车被原样带入本场景
-      // ——这正是"对话框出现瞬间立刻被当作下一句跳过"的根因。
-      if (!this._guardT) this._guardT = 0.25;
-      if (this._guardT > 0) this._guardT -= dt;
+    // ===== 移动端衔接 Bug 修复 =====
+    // 刚切换进来的 0.25 秒内忽略任何点击 / 回车 / 空格，
+    // 避免上一场景（菜单/选关/结算）的最后一次 tap 或回车被原样带入本场景
+    // ——这正是"对话框出现瞬间立刻被当作下一句跳过"的根因。
+    if (!this._guardT) this._guardT = 0.25;
+    if (this._guardT > 0) this._guardT -= dt;
 
-      if (this._guardT <= 0 && !this._starting && (input.justPressed("enter", " ") || input.pointer.justDown)) {
-        this._advance();
-      }
+    if (this._guardT <= 0 && !this._starting && (input.justPressed("enter", " ") || input.pointer.justDown)) {
+      this._advance();
     }
+  }
 
   render(ctx) {
     const W = this.game.width, H = this.game.height;
@@ -130,18 +127,9 @@ export class IntroScene extends Scene {
     const line = this.lines[this.idx];
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    // 露娜用金色 + 名字后带"✦"小标识，与叶林的紫色形成区分
-    if (line.who === "露娜") {
-      ctx.fillStyle = "#ffcf5c";
-      ctx.shadowColor = "#ffcf5c"; ctx.shadowBlur = 4;
-      ctx.font = "bold 12px monospace";
-      ctx.fillText("✦ 露娜", 28, boxY + 10);
-      ctx.shadowBlur = 0;
-    } else {
-      ctx.fillStyle = PALETTE.gold;
-      ctx.font = "bold 12px monospace";
-      ctx.fillText("叶林", 28, boxY + 10);
-    }
+    ctx.fillStyle = PALETTE.gold;
+    ctx.font = "bold 12px monospace";
+    ctx.fillText(line.who, 28, boxY + 10);
 
     // 正文（打字机）
     ctx.fillStyle = PALETTE.text;
