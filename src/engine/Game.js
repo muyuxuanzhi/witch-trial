@@ -56,6 +56,16 @@ export class Game {
       console.error("[Game] 场景 onExit 出错：", e);
     }
     this.scene = scene;
+    // ===== 场景切换兜底 =====
+    // 1) 重置 Input 的指针/键盘一次性状态，避免上一场景的 tap 或按键状态
+    //    被带进新场景，导致新场景一打开就被错误地触发一次点击/回车——这是
+    //    手机上"对话框进关卡衔接瞬间又被当成点了新关卡"的典型原因。
+    try {
+      if (this.input) this.input.resetTransient();
+    } catch (e) { /* 兜底，不影响切场景 */ }
+    // 2) 短暂叠加一层"loading"覆盖层，下一帧渲染完新场景后由 update 自行清除，
+    //    避免弱网下场景模块还没加载完就闪一帧黑屏/旧场景残影。
+    this._sceneLoadT = 0.35;
     try {
       if (this.scene.onEnter) this.scene.onEnter();
     } catch (e) {
@@ -80,6 +90,20 @@ export class Game {
         } catch (e) {
           console.error("[Game] 场景运行出错：", e);
         }
+      }
+      // ===== 场景切换兜底层：渐隐的过渡遮罩 =====
+      if (this._sceneLoadT && this._sceneLoadT > 0) {
+        this._sceneLoadT -= dt;
+        if (this._sceneLoadT < 0) this._sceneLoadT = 0;
+        const a = Math.max(0, Math.min(1, this._sceneLoadT / 0.35));
+        this.ctx.save();
+        this.ctx.fillStyle = `rgba(20,10,31,${a * 0.85})`;
+        this.ctx.fillRect(0, 0, this.width, this.height);
+        this.ctx.fillStyle = `rgba(255,207,92,${a * 0.6})`;
+        this.ctx.font = "10px monospace";
+        this.ctx.textAlign = "center"; this.ctx.textBaseline = "middle";
+        this.ctx.fillText("✦ 加载中…", this.width / 2, this.height / 2);
+        this.ctx.restore();
       }
       this.input.postUpdate();
       this._raf = requestAnimationFrame(loop);

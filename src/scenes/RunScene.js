@@ -19,6 +19,7 @@ import { rollChoices } from "../data/buffs.js";
 import { getFormByTrial, getNextForm, WITCH_FORMS } from "../data/witchForms.js";
 import { getLevel, levelBgSkin } from "../data/levels.js";
 import { Difficulty } from "../data/difficulty.js";
+import { ACHIEVEMENTS } from "../data/achievements.js";
 import { MenuScene } from "./MenuScene.js";
 import { audio } from "../engine/Audio.js";
 
@@ -77,6 +78,8 @@ export class RunScene extends Scene {
     // ===== 难度：地狱模式生命制 =====
     this.diff = Difficulty.get();
     this.hitsTaken = 0;   // 已受击次数（地狱生命制用）
+    // ===== 本局统计（成就系统用） =====
+    Save.initRunStats(this.save);
 
     this.state = "run";      // run | choose | dead | paused | goal
     this.shake = 0;
@@ -363,6 +366,7 @@ export class RunScene extends Scene {
           this._gainTrial(val, e.x + e.w / 2, CONFIG.laneMidY, PALETTE.gold);
           //拾取特效更华丽
           this.particles.burst(e.x + e.w / 2, CONFIG.laneMidY, PALETTE.gold, 24, { speed: 170, life: 0.8, size: 3 });
+          Save.recordCollect(this.save, 1);
         }
         continue;
       }
@@ -379,6 +383,7 @@ export class RunScene extends Scene {
         const color = e.orbKind === "potion" ? PALETTE.cyan : PALETTE.gold;
         audio.play(e.orbKind === "potion" ? "collectPotion" : "collectStar");
         this._gainTrial(val, e.x + e.w / 2, this.player.cy, color);
+        Save.recordCollect(this.save, 1);
       } else {
         // 障碍从右向左移动，用"扫掠区间"判定：本帧覆盖 [e.x, prevRight]，
         // 避免高速下细障碍一帧内跨过玩家判定区而漏检（碰到不受伤）。
@@ -398,6 +403,7 @@ export class RunScene extends Scene {
     if (this.diff.runLifeMode) {
       e.dead = true;
       this.hitsTaken++;
+      Save.recordObstacleHit(this.save);
       this.player.hit();
       audio.play("hit");
       this.hitStop = CONFIG.hitStop;
@@ -421,6 +427,7 @@ export class RunScene extends Scene {
         this.hitStop = CONFIG.hitStop * 0.4;
       }
       this._smashFx(e);
+      // 破障碾压不计入"撞击"次数（不算障碍撞击），不打断连续拾取
       return;
     }
 
@@ -429,6 +436,7 @@ export class RunScene extends Scene {
 
     this.trial -= penalty;
     this.player.hit();
+    Save.recordObstacleHit(this.save);
     audio.play("hit");
     this.hitStop = CONFIG.hitStop;
     this.shake = CONFIG.shakeOnHit;

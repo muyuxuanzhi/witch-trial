@@ -10,6 +10,7 @@ import { Particles } from "../systems/Particles.js";
 import { Save } from "../systems/Save.js";
 import { getLevelBoss, getLevel, TOTAL_LEVELS } from "../data/levels.js";
 import { Difficulty } from "../data/difficulty.js";
+import { ACHIEVEMENTS } from "../data/achievements.js";
 import { MenuScene } from "./MenuScene.js";
 import { audio } from "../engine/Audio.js";
 
@@ -126,6 +127,12 @@ export class BossScene extends Scene {
   update(dt, input) {
     this.t += dt;
 
+    // 进入 Boss 战 / 武器选择 后的首次"输入缓冲"：0.4 秒内忽略回车/点击，
+    // 避免上一场景（结算点"下一关"按钮）的最后一次 tap 被原样带进来，
+    // 触发"刚切进武器选择就立刻被确认"——手机端关卡衔接 Bug 的根因之一。
+    if (this._guardT == null) this._guardT = 0.4;
+    if (this._guardT > 0) this._guardT -= dt;
+
     if (this.state === "paused") {
       const b = this._pauseMenuButtons();
       if (input.justPressed("p", "escape") || input.tapIn(b.resume)) { audio.play("click"); this.state = "fight"; }
@@ -137,7 +144,8 @@ export class BossScene extends Scene {
       this.endT += dt;
       this.particles.update(dt);
       this._updateBullets(dt, true);
-      if (this.endT > 0.5 && !this._navigating) {
+      // 结算时同样需要输入缓冲，否则"刚结束"那帧回车/点击会直接进入下一场景
+      if (this.endT > 0.5 && !this._navigating && this._guardT <= 0) {
         const b = this._endButtons();
         if (this.state === "win") {
           if (input.justPressed("enter", " ") || input.tapIn(b.next)) { this._navigating = true; audio.play("click"); this._goNext(); }
@@ -265,6 +273,7 @@ export class BossScene extends Scene {
   _collectStar() {
     const p = this.player;
     this.starCollected++;
+    Save.recordCollect(this.save, 1);
     audio.play("rareStar");
     // 回血：普通 +6；地狱 3 血制下最多回 1 滴（避免瞬间回满，无敌才是核心收益）
     p.hp = Math.min(p.maxHp, p.hp + (this.diff.bossLifeMode ? 1 : 6));
@@ -486,6 +495,7 @@ export class BossScene extends Scene {
           if (p.invuln <= 0) {
             p.hp -= PLAYER_HIT_DMG;
             p.invuln = PLAYER_INVULN;
+            Save.recordBossHit(this.save);
             audio.play("hit");
             this.particles.burst(p.x, p.y, PALETTE.danger, 12, { speed: 110, life: 0.5, size: 3 });
             if (p.hp <= 0) this._lose();
@@ -504,11 +514,72 @@ export class BossScene extends Scene {
     if (this.endless) {
       // 无限模式：不解锁关卡，仅累加金币奖励并存档
       this.save.coins += this.reward;
+      this.save.statCoinsTotal = (this.save.statCoinsTotal || 0) + this.reward;
+      // 更新无限模式最高轮次
+      if ((this.save.statBestEndlessRound || 0) < this.round) {
+        this.save.statBestEndlessRound = this.round;
+      }
+      // 记录本局无限模式轮次
+      if (this.save.runStats) this.save.runStats.bossEndlessRound = this.round;
       Save.save(this.save);
     } else {
       // 记录通关 + 奖励 + 解锁下一关
       Save.clearLevel(this.save, this.level.id, this.level.index, TOTAL_LEVELS, this.reward);
-  }
+      // 地狱难度：累计通关关卡
+      if (this.diff.id === "hell") {
+        this.save.statHellCleared = (this.save.statHellCleared || 0) + 1;
+      }
+      // 记录本局通关关卡id
+      if (this.save.runStats && !(this.save.runStats.clearedLevelIds || []).includes(this.level.id)) {
+        if (!this.save.runStats.clearedLevelIds) this.save.runStats.clearedLevelIds = [];
+        this.save.runStats.clearedLevelIds.push(this.level.id);
+      }
+      Save.save(this.save);
+    }
+    // 记录通关时的护盾结界层数（成就"电波系"用）
+    if (this.save.runStats) this.save.runStats.guardStacks = (this.carry.buffs && this.carry.buffs.guard) || 0;
+    // ===== 成就结算检查 =====
+    // Boss战不受伤通关
+    if (this.save.runStats && (this.save.runStats.bossHits || 0) === 0 && !this.endless) {
+      this.save.statBossClearNoHit = (this.save.statBossClearNoHit || 0) + 1;
+    }
+    // 撞满血量上限仍通关（地狱"永不退缩"）：RunScene 端统计的 hitsTaken 通过 carry 传不过来，
+    // 简化处理：只要 hitsTaken 不存在就跳过；保留口子留给后续 RunScene 写入。
+    // 跑酷无伤通关（无限模式不算）——需要 RunScene 端把"无伤通关"写进 runStats，
+    // 这里由 Save.checkAchievements 在结算时统一读取并计算。
+    if (this.save.runStats) {
+      // 本局是否无伤：障碍撞击=0 且 boss 受击=0
+      const noObstacleHit = (this.save.runStats.obstacleHits || 0) === 0;
+      const noBossHit = (this.save.runStats.bossHits || 0) === 0;
+      if (!this.endless && noObstacleHit && noBossHit) {
+        this.save.statClearWithoutHit = (this.save.statClearWithoutHit || 0) + 1;
+      }
+      // 撞满血量上限仍通关（地狱）——需要在 RunScene 端判断并写入 statFullBloodClear。
+      // 这里仅在 RunScene 已写入的前提下生效。
+    }
+    // 666 倍数金币 / 护盾 ≥6 / 终极甜蜜 触发判定（普通模式才统计666等）
+    if (!this.endless) {
+      const finalCoins = this.save.coins;
+      if (finalCoins > 0 && finalCoins % 666 === 0) {
+        this.save.statCoins666 = (this.save.statCoins666 || 0) + 1;
+      }
+      const guard = (this.carry.buffs && this.carry.buffs.guard) || 0;
+      if (guard >= 6) {
+        this.save.statGuard6 = (this.save.statGuard6 || 0) + 1;
+      }
+      // 一周目通关（5 关都打过）
+      if ((this.save.runStats.clearedLevelIds || []).length >= 5) {
+        this.save.statOneShotClear = (this.save.statOneShotClear || 0) + 1;
+      }
+      // 终极甜蜜：通关 + 黄金魔女皮肤已解锁
+      if ((this.save.owned.character || []).includes("gold")) {
+        this.save.statFinalSweet = (this.save.statFinalSweet || 0) + 1;
+      }
+    }
+    Save.save(this.save);
+    // 触发成就解锁
+    const newly = Save.checkAchievements(this.save, ACHIEVEMENTS);
+    if (newly.length) this._newAchievements = newly;
     // 胜利判定出来就立刻在后台预取"下一步"要用到的场景模块，结算画面展示
     // 期间正好用来把加载做完，避免点击"下一关/下一轮"瞬间才发起请求造成卡顿。
     this._nextPromise = (this.endless

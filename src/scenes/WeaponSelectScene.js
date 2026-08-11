@@ -46,12 +46,16 @@ export class WeaponSelectScene extends Scene {
 
   update(dt, input) {
     this.t += dt;
-    if (input.justPressed("arrowleft", "a")) this.sel = (this.sel + WEAPONS.length - 1) % WEAPONS.length;
-    if (input.justPressed("arrowright", "d")) this.sel = (this.sel + 1) % WEAPONS.length;
-    if (input.justPressed("1")) this.sel = 0;
-    if (input.justPressed("2")) this.sel = 1;
-    if (input.justPressed("3")) this.sel = 2;
-    if (input.justPressed("4")) this.sel = 3;
+    // 进入武器选择后 0.4 秒输入缓冲：防止"上一场景最后一次 tap"被原样带进来
+    if (this._guardT == null) this._guardT = 0.4;
+    if (this._guardT > 0) this._guardT -= dt;
+    const guarded = this._guardT > 0;
+    if (!guarded && input.justPressed("arrowleft", "a")) this.sel = (this.sel + WEAPONS.length - 1) % WEAPONS.length;
+    if (!guarded && input.justPressed("arrowright", "d")) this.sel = (this.sel + 1) % WEAPONS.length;
+    if (!guarded && input.justPressed("1")) this.sel = 0;
+    if (!guarded && input.justPressed("2")) this.sel = 1;
+    if (!guarded && input.justPressed("3")) this.sel = 2;
+    if (!guarded && input.justPressed("4")) this.sel = 3;
 
     const rects = this._cardRects();
     for (let i = 0; i < rects.length; i++) {
@@ -62,7 +66,7 @@ export class WeaponSelectScene extends Scene {
         } else this.sel = i;
       }
     }
-    if (input.justPressed("enter", " ") || input.tapIn(this._startBtn())) this._start();
+    if (!guarded && (input.justPressed("enter", " ") || input.tapIn(this._startBtn()))) this._start();
   }
 
   _start() {

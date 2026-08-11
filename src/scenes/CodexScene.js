@@ -11,6 +11,8 @@ import { audio } from "../engine/Audio.js";
 // 角色设定图（仓库 assets 目录）
 const CHAR_IMG = new Image();
 CHAR_IMG.src = "assets/witch-character.png";
+const GOLDEN_IMG = new Image();
+GOLDEN_IMG.src = "assets/golden-witch.png";
 
 const TABS = ["角色", "Buff 增益", "Boss 图鉴"];
 
@@ -106,56 +108,107 @@ export class CodexScene extends Scene {
 
   // ===== 角色页 =====
   _renderCharacter(ctx, W, H, top) {
-    const imgW = Math.min(150, W * 0.4);
-    const imgX = 16, imgY = top + 8;
-    // 角色图
-    if (CHAR_IMG.complete && CHAR_IMG.naturalWidth) {
-      const ratio = CHAR_IMG.naturalHeight / CHAR_IMG.naturalWidth;
-      const ih = Math.min(imgW * ratio, H - top - 30);
-      const iw = ih / ratio;
-      ctx.save();
-      ctx.strokeStyle = "rgba(185,107,255,0.5)"; ctx.lineWidth = 2;
-      ctx.strokeRect(imgX, imgY, iw, ih);
-      ctx.drawImage(CHAR_IMG, imgX, imgY, iw, ih);
-      ctx.restore();
-    } else {
-      ctx.fillStyle = "rgba(255,255,255,0.06)";
-      ctx.fillRect(imgX, imgY, imgW, 120);
-      ctx.fillStyle = "rgba(233,220,255,0.5)"; ctx.font = "9px monospace"; ctx.textAlign = "center";
-      ctx.fillText("角色图加载中…", imgX + imgW / 2, imgY + 60);
+    // 上半：叶林（见习魔女） 下半：黄金魔女
+    const halfH = (H - top - 14) / 2;
+    this._renderYelin(ctx, W, top, halfH);
+    const sep = top + halfH;
+    // 分隔线
+    ctx.fillStyle = "rgba(185,107,255,0.2)";
+    ctx.fillRect(16, sep - 0.5, W - 32, 1);
+    this._renderGoldenWitch(ctx, W, sep + 4, halfH - 4);
+  }
+
+  // 叶林
+  _renderYelin(ctx, W, top, halfH) {
+    const imgW = Math.min(80, W * 0.22);
+    const imgX = 16, imgY = top + 6;
+    const ratio = (CHAR_IMG.naturalHeight && CHAR_IMG.naturalWidth) ? (CHAR_IMG.naturalHeight / CHAR_IMG.naturalWidth) : 1;
+    const ih = Math.min(halfH - 14, imgW * ratio);
+    const iw = ih / ratio;
+    ctx.save();
+    ctx.strokeStyle = "rgba(185,107,255,0.5)"; ctx.lineWidth = 1;
+    ctx.strokeRect(imgX, imgY, iw, ih);
+    if (CHAR_IMG.complete && CHAR_IMG.naturalWidth) ctx.drawImage(CHAR_IMG, imgX, imgY, iw, ih);
+    else {
+      ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(imgX, imgY, iw, ih);
+      ctx.fillStyle = "rgba(233,220,255,0.5)"; ctx.font = "8px monospace"; ctx.textAlign = "center";
+      ctx.fillText("加载中", imgX + iw / 2, imgY + ih / 2);
     }
+    ctx.restore();
 
-    // 右侧文字
-    const tx = imgX + imgW + 20;
-    let ty = top + 14;
+    // 右侧文字（紧凑）
+    const tx = imgX + iw + 12;
+    let ty = top + 4;
     ctx.textAlign = "left"; ctx.textBaseline = "top";
-    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 15px monospace";
-    ctx.fillText("叶林· 见习魔女", tx, ty); ty += 22;
+    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 12px monospace";
+    ctx.fillText("叶林 · 见习魔女", tx, ty); ty += 16;
 
-    ctx.font = "9px monospace"; ctx.fillStyle = "rgba(233,220,255,0.85)";
+    ctx.font = "8px monospace"; ctx.fillStyle = "rgba(233,220,255,0.85)";
     const lines = [
-      "森林魔女学院的见习生，元气活泼、",
-      "好奇莽撞又坚韧。并非天赋型魔女，",
-      "被评为「勉强及格」，却坚信集齐星",
-      "光就能证明自己。为通过成为正式魔",
-      "女的试炼，踏上五段秘境旅程。",
+      "森林魔女学院的见习生，元气活泼、好",
+      "奇莽撞又坚韧。并非天赋型魔女，被评",
+      "为「勉强及格」，却坚信集齐星光就能",
+      "证明自己。为通过正式魔女的试炼，踏",
+      "上五段秘境旅程。",
     ];
-    for (const l of lines) { ctx.fillText(l, tx, ty); ty += 13; }
-    ty += 6;
+    for (const l of lines) { ctx.fillText(l, tx, ty); ty += 11; }
+    ty += 2;
 
-    ctx.fillStyle = PALETTE.neon; ctx.font = "10px monospace";
-    ctx.fillText("形态进化线", tx, ty); ty += 15;
-    ctx.font = "9px monospace";
+    ctx.fillStyle = PALETTE.neon; ctx.font = "9px monospace";
+    ctx.fillText("形态进化线", tx, ty); ty += 12;
+    ctx.font = "8px monospace";
     const formColors = ["#8fb8ff", "#b96bff", "#d08bff", "#ffcf5c"];
     for (let i = 0; i < WITCH_FORMS.length; i++) {
       const f = WITCH_FORMS[i];
       ctx.fillStyle = formColors[i] || "#fff";
-      ctx.fillText(`◆ ${f.name}(试炼值 ${f.threshold})`, tx, ty);
-      ty += 13;
+      ctx.fillText(`◆ ${f.name} (${f.threshold})`, tx, ty);
+      ty += 11;
     }
+  }
+
+  // 黄金魔女
+  _renderGoldenWitch(ctx, W, top, halfH) {
+    const imgW = Math.min(80, W * 0.22);
+    const imgX = 16, imgY = top + 6;
+    const ratio = (GOLDEN_IMG.naturalHeight && GOLDEN_IMG.naturalWidth) ? (GOLDEN_IMG.naturalHeight / GOLDEN_IMG.naturalWidth) : 1;
+    const ih = Math.min(halfH - 14, imgW * ratio);
+    const iw = ih / ratio;
+    ctx.save();
+    // 金色描边（黄金魔女专属）
+    ctx.strokeStyle = "#ffcf5c"; ctx.lineWidth = 2;
+    ctx.shadowColor = "#ffcf5c"; ctx.shadowBlur = 6;
+    ctx.strokeRect(imgX, imgY, iw, ih);
+    ctx.shadowBlur = 0;
+    if (GOLDEN_IMG.complete && GOLDEN_IMG.naturalWidth) ctx.drawImage(GOLDEN_IMG, imgX, imgY, iw, ih);
+    else {
+      ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(imgX, imgY, iw, ih);
+      ctx.fillStyle = "rgba(255,207,92,0.6)"; ctx.font = "8px monospace"; ctx.textAlign = "center";
+      ctx.fillText("加载中", imgX + iw / 2, imgY + ih / 2);
+    }
+    ctx.restore();
+
+    // 右侧文字
+    const tx = imgX + iw + 12;
+    let ty = top + 4;
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillStyle = "#ffcf5c"; ctx.font = "bold 12px monospace";
+    ctx.shadowColor = "#ffcf5c"; ctx.shadowBlur = 4;
+    ctx.fillText("露娜 · 黄金魔女", tx, ty);
+    ctx.shadowBlur = 0;
+    ty += 16;
+
+    ctx.font = "8px monospace"; ctx.fillStyle = "rgba(255,247,200,0.9)";
+    const lines = [
+      "慵懒的电波系魔女。爱吃甜食尤其钟爱坚",
+      "果巧克力，喜欢一切金灿灿的东西。曾经",
+      "立下豪言——若叶林能通过试炼，就给",
+      "她买 10 万箱金箔坚果巧克力！",
+    ];
+    for (const l of lines) { ctx.fillText(l, tx, ty); ty += 11; }
     ty += 4;
-    ctx.fillStyle = "rgba(255,207,92,0.85)"; ctx.font = "8px monospace";
-    ctx.fillText("口头禅：「深呼吸……我准备好了！」", tx, ty);
+
+    ctx.fillStyle = "#ffcf5c"; ctx.font = "9px monospace";
+    ctx.fillText("「为了金灿灿和甜品……power！！！」", tx, ty);
   }
 
   // ===== Buff 页 =====

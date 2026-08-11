@@ -97,4 +97,17 @@ export class Input {
     this.swipeUp = false;
     this.swipeDown = false;
   }
+
+  // 场景切换时调用：清掉所有一次性触发标志位（按键刚按、指针刚按下、滑动刚触发），
+  // 避免上一场景的 tap/按键被带到下一场景，造成"打开新场景的瞬间就被错误地
+  // 点了一下/按了一下"。同时确保指针 down 状态也被清掉（防止某次触摸事件丢失
+  // 导致 down 状态卡住、下一帧被错误识别为拖动）。
+  resetTransient() {
+    this.pressed.clear();
+    this.pointer.justDown = false;
+    this.pointer.down = false;
+    this.swipeUp = false;
+    this.swipeDown = false;
+    this._touch.fired = false;
+  }
 }

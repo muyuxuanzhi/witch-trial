@@ -6,6 +6,7 @@ import { Save } from "../systems/Save.js";
 import { getSkin } from "../data/skins.js";
 import { LevelSelectScene } from "./LevelSelectScene.js";
 import { ShopScene } from "./ShopScene.js";
+import { AchievementsScene } from "./AchievementsScene.js";
 import { Difficulty, DIFF_ORDER, getDifficulty } from "../data/difficulty.js";
 import { audio } from "../engine/Audio.js";
 
@@ -16,7 +17,7 @@ export class MenuScene extends Scene {
     this.save = Save.load();
     this.bg = new Background(game.width, game.height, getSkin("background", this.save.equipped.background));
     //菜单项：难度为可切换项（左右/点击循环）
-    this.items = ["开始试炼", "图鉴", "商城", "难度"];
+    this.items = ["开始试炼", "图鉴", "商城", "成就", "难度"];
     this.sel = 0;
     this.diffId = Difficulty.load();
   }
@@ -37,7 +38,10 @@ export class MenuScene extends Scene {
 
   _itemRects() {
     const W = this.game.width, H = this.game.height;
-    return this.items.map((_, i) => ({ x: W / 2 - 90, y: H * 0.56 + i * 28 - 13, w: 180, h: 26 }));
+    // 5 项时把间距从 28 收到 25 + 整体上移一点，避免 480x270 内挤到底边
+    const startY = H * 0.52 - 12;
+    const gap = 25;
+    return this.items.map((_, i) => ({ x: W / 2 - 90, y: startY + i * gap, w: 180, h: 22 }));
   }
 
   _activate(i) {
@@ -49,7 +53,8 @@ export class MenuScene extends Scene {
         .catch((e) => console.warn("[MenuScene] 打开图鉴失败", e));
     }
     else if (i === 2) this.game.changeScene(new ShopScene(this.game));
-    else if (i === 3) this._cycleDifficulty(1); // 难度项：确认即切换
+    else if (i === 3) this.game.changeScene(new AchievementsScene(this.game));
+    else if (i === 4) this._cycleDifficulty(1); // 难度项：确认即切换
   }
 
   update(dt, input) {
@@ -59,7 +64,7 @@ export class MenuScene extends Scene {
     if (input.justPressed("arrowup", "w")) this.sel = (this.sel + this.items.length - 1) % this.items.length;
     if (input.justPressed("arrowdown", "s")) this.sel = (this.sel + 1) % this.items.length;
     // 选中难度项时，左右键切换难度
-    if (this.sel === 3) {
+    if (this.sel === 4) {
       if (input.justPressed("arrowleft", "a")) this._cycleDifficulty(-1);
       if (input.justPressed("arrowright", "d")) this._cycleDifficulty(1);
     }
@@ -95,21 +100,21 @@ export class MenuScene extends Scene {
     ctx.fillText("见习魔女 · 叶林", W / 2, H * 0.26 + 42);
 
     const rects = this._itemRects();
-    ctx.font = "14px monospace";
+    ctx.font = "13px monospace";
     const curDiff = getDifficulty(this.diffId);
     for (let i = 0; i < this.items.length; i++) {
       const r = rects[i];
       const on = i === this.sel;
       // 难度项：显示 "难度：◄ 地狱 ►"
       let label = this.items[i];
-      if (i === 3) label = `难度  ◄ ${curDiff.icon}${curDiff.name} ►`;
+      if (i === 4) label = `难度  ◄ ${curDiff.icon}${curDiff.name} ►`;
       if (on) {
         ctx.fillStyle = "rgba(185,107,255,0.16)";
         ctx.fillRect(r.x, r.y, r.w, r.h);
-        ctx.fillStyle = (i === 3) ? curDiff.color : PALETTE.gold;
-        ctx.fillText((i === 3 ? "" : "▶  ") + label + (i === 3 ? "" : "  ◀"), W / 2, r.y + r.h / 2 + 1);
+        ctx.fillStyle = (i === 4) ? curDiff.color : PALETTE.gold;
+        ctx.fillText((i === 4 ? "" : "▶  ") + label + (i === 4 ? "" : "  ◀"), W / 2, r.y + r.h / 2 + 1);
       } else {
-        ctx.fillStyle = (i === 3) ? curDiff.color : "rgba(233,220,255,0.6)";
+        ctx.fillStyle = (i === 4) ? curDiff.color : "rgba(233,220,255,0.6)";
         ctx.fillText(label, W / 2, r.y + r.h / 2 + 1);
       }
     }
@@ -117,7 +122,7 @@ export class MenuScene extends Scene {
     if (this.diffId === "hell") {
       ctx.font = "8px monospace";
       ctx.fillStyle = "rgba(255,120,120,0.75)";
-      ctx.fillText("🔥 三命定生死 · Boss 血量×3 · 破障魔法改为耐撞翻倍", W / 2, rects[3].y + rects[3].h + 12);
+      ctx.fillText("🔥 三命定生死 · Boss 血量×3 · 破障魔法改为耐撞翻倍", W / 2, rects[4].y + rects[4].h + 10);
     }
 
     ctx.textAlign = "right";
@@ -132,7 +137,7 @@ export class MenuScene extends Scene {
     ctx.textBaseline = "middle";
     ctx.fillStyle = "rgba(233,220,255,0.45)";
     ctx.font = "8px monospace";
-    ctx.fillText("↑↓选择 · ←→ 切换难度 · Enter 确认", W / 2, H * 0.9);
+    ctx.fillText("↑↓选择 · ←→ 切换难度 · Enter 确认", W / 2, H * 0.92);
     ctx.textAlign = "left";
   }
 }
