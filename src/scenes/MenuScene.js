@@ -7,6 +7,7 @@ import { getSkin } from "../data/skins.js";
 import { LevelSelectScene } from "./LevelSelectScene.js";
 import { ShopScene } from "./ShopScene.js";
 import { Difficulty, DIFF_ORDER, getDifficulty } from "../data/difficulty.js";
+import { audio } from "../engine/Audio.js";
 
 export class MenuScene extends Scene {
   constructor(game) {
@@ -24,6 +25,7 @@ export class MenuScene extends Scene {
     this.save = Save.load();
     this.bg.setSkin(getSkin("background", this.save.equipped.background));
     this.diffId = Difficulty.load();
+    audio.playBgm("menu");
   }
 
   _cycleDifficulty(dir = 1) {
@@ -39,6 +41,7 @@ export class MenuScene extends Scene {
   }
 
   _activate(i) {
+    audio.play("click");
     if (i === 0) this.game.changeScene(new LevelSelectScene(this.game));
     else if (i === 1) {
       import("./CodexScene.js").then((m) => this.game.changeScene(new m.CodexScene(this.game)));

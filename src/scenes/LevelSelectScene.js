@@ -8,6 +8,7 @@ import { LEVELS, TOTAL_LEVELS, makeEndlessLevel } from "../data/levels.js";
 import { getBossById } from "../data/bosses.js";
 import { MenuScene } from "./MenuScene.js";
 import { IntroScene } from "./IntroScene.js";
+import { audio } from "../engine/Audio.js";
 
 export class LevelSelectScene extends Scene {
   constructor(game) {
@@ -48,6 +49,7 @@ export class LevelSelectScene extends Scene {
     this.bg.update(dt, 90);
 
     if (input.justPressed("escape", "backspace") || input.tapIn(this._backBtn())) {
+      audio.play("click");
       this.game.changeScene(new MenuScene(this.game));
       return;
     }
@@ -60,7 +62,7 @@ export class LevelSelectScene extends Scene {
       if (input.tapIn(rects[i])) {
         if (Save.isLevelUnlocked(this.save, LEVELS[i].index)) {
           if (this.sel === i) this._enterLevel(i);
-          else this.sel = i;
+          else { audio.play("click"); this.sel = i; }
         } else {
           this.sel = i; // 锁定关也可选中看信息，但不能进入
         }
@@ -78,6 +80,7 @@ export class LevelSelectScene extends Scene {
   }
 
   _enterEndless() {
+    audio.play("click");
     // 无限模式从第 1 轮开始，直接进入 IntroScene 走正常流程
     this.game.changeScene(new IntroScene(this.game, makeEndlessLevel(1)));
   }
@@ -85,6 +88,7 @@ export class LevelSelectScene extends Scene {
   _enterLevel(i) {
     const lv = LEVELS[i];
     if (!Save.isLevelUnlocked(this.save, lv.index)) return;
+    audio.play("click");
     this.game.changeScene(new IntroScene(this.game, lv));
   }
 

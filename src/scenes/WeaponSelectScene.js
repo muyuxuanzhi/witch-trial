@@ -5,6 +5,7 @@ import { PALETTE } from "../engine/Game.js";
 import { Save } from "../systems/Save.js";
 import { WEAPONS } from "../data/weapons.js";
 import { getLevelBoss } from "../data/levels.js";
+import { audio } from "../engine/Audio.js";
 
 export class WeaponSelectScene extends Scene {
   // level: 当前关卡数据；carry: 从RunScene 带过来的状态（buffs、form等，可选）
@@ -51,7 +52,7 @@ export class WeaponSelectScene extends Scene {
       if (input.tapIn(rects[i])) {
         if (this._isOwned(WEAPONS[i])) {
           if (this.sel === i) this._start();
-          else this.sel = i;
+          else { audio.play("click"); this.sel = i; }
         } else this.sel = i;
       }
     }
@@ -61,6 +62,7 @@ export class WeaponSelectScene extends Scene {
   _start() {
     const w = WEAPONS[this.sel];
     if (!this._isOwned(w)) return;
+    audio.play("click");
     // 记住装备
     Save.equip(this.save, "weapon", w.id);
     import("./BossScene.js").then((m) => {

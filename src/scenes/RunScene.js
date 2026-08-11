@@ -20,6 +20,7 @@ import { getFormByTrial, getNextForm, WITCH_FORMS } from "../data/witchForms.js"
 import { getLevel, levelBgSkin } from "../data/levels.js";
 import { Difficulty } from "../data/difficulty.js";
 import { MenuScene } from "./MenuScene.js";
+import { audio } from "../engine/Audio.js";
 
 const FINAL_FORM_ID = WITCH_FORMS[WITCH_FORMS.length - 1].id;
 
@@ -94,6 +95,10 @@ export class RunScene extends Scene {
   get score() { return Math.floor(this.distance) + this.totalTrial; }
   stacks(id) { return this.buffs[id] || 0; }
 
+  onEnter() {
+    audio.playBgm("run");
+  }
+
   // 地狱难度：最大可承受撞击数= 基础命数 × 2^(破障魔法层数)
   // 破障魔法【smash】在地狱下效果改变：每拾取一层耐撞翻倍(3→6→12)
   get maxLives() {
@@ -139,8 +144,10 @@ export class RunScene extends Scene {
     if (this.state === "paused") {
       const b = this._pauseMenuButtons();
       if (input.justPressed("p", "escape") || input.tapIn(b.resume)) {
+        audio.play("click");
         this.state = "run";
       } else if (input.tapIn(b.exit)) {
+        audio.play("click");
         this.game.changeScene(new MenuScene(this.game));
       }
       return;
@@ -158,6 +165,7 @@ export class RunScene extends Scene {
       this.particles.update(dt);
       this.shake *= 0.9;
       if (this.goalT > 1.4 || input.justPressed("enter", " ") || input.pointer.justDown) {
+        audio.play("click");
         this._enterWeaponSelect();
       }
       return;
@@ -176,6 +184,7 @@ export class RunScene extends Scene {
         if (input.tapIn(rects[i])) pick = i;
       }
       if (pick >= 0 && pick < this.choices.length && this.chooseAppearT > 0.25) {
+        audio.play("click");
         this._takeBuff(this.choices[pick]);
         this.state = "run";
       }
@@ -190,6 +199,7 @@ export class RunScene extends Scene {
       if (this.deadT > 0.4) {
         const b = this._deadButtons();
         if (input.justPressed("enter", " ") || input.tapIn(b.restart)) {
+          audio.play("click");
    if (this.endless) {
    import("../data/levels.js").then((m) => {
          this.game.changeScene(new RunScene(this.game, m.makeEndlessLevel(1)));
@@ -198,6 +208,7 @@ export class RunScene extends Scene {
             this.game.changeScene(new RunScene(this.game, this.level));
           }
         } else if (input.justPressed("escape", "backspace") || input.tapIn(b.menu)) {
+          audio.play("click");
           this.game.changeScene(new MenuScene(this.game));
         }
       }
@@ -207,6 +218,7 @@ export class RunScene extends Scene {
     // ===== 正常游玩 =====
     // 暂停触发（P 键 / 点击右上角暂停按钮）
     if (input.justPressed("p", "escape") || input.tapIn(this._pauseBtn())) {
+      audio.play("click");
       this.state = "paused";
       return;
     }
@@ -321,6 +333,7 @@ export class RunScene extends Scene {
           e.dead = true;
           const doubleMul = 1 + this.stacks("double");
           const val = CONFIG.rareStarValue * doubleMul;
+          audio.play("rareStar");
           this._gainTrial(val, e.x + e.w / 2, CONFIG.laneMidY, PALETTE.gold);
           //拾取特效更华丽
           this.particles.burst(e.x + e.w / 2, CONFIG.laneMidY, PALETTE.gold, 24, { speed: 170, life: 0.8, size: 3 });
@@ -338,6 +351,7 @@ export class RunScene extends Scene {
         const base = e.orbKind === "potion" ? CONFIG.potionValue : CONFIG.starValue;
         const val = base * doubleMul;
         const color = e.orbKind === "potion" ? PALETTE.cyan : PALETTE.gold;
+        audio.play(e.orbKind === "potion" ? "collectPotion" : "collectStar");
         this._gainTrial(val, e.x + e.w / 2, this.player.cy, color);
       } else {
         // 障碍从右向左移动，用"扫掠区间"判定：本帧覆盖 [e.x, prevRight]，
@@ -359,6 +373,7 @@ export class RunScene extends Scene {
       e.dead = true;
       this.hitsTaken++;
       this.player.hit();
+      audio.play("hit");
       this.hitStop = CONFIG.hitStop;
       this.shake = CONFIG.shakeOnHit;
       this.particles.burst(this.player.cx, this.player.cy, PALETTE.danger, 18, { speed: 130, life: 0.6, size: 3 });
@@ -388,6 +403,7 @@ export class RunScene extends Scene {
 
     this.trial -= penalty;
     this.player.hit();
+    audio.play("hit");
     this.hitStop = CONFIG.hitStop;
     this.shake = CONFIG.shakeOnHit;
     this.particles.burst(this.player.cx, this.player.cy, PALETTE.danger, 18, { speed: 130, life: 0.6, size: 3 });
@@ -415,6 +431,7 @@ export class RunScene extends Scene {
 
   _die() {
     this.state = "dead";
+    audio.play("death");
     this.hitStop = CONFIG.hitStop;
     this.shake = CONFIG.shakeOnHit;
     this.particles.burst(this.player.cx, this.player.cy, PALETTE.danger, 24, { speed: 150, life: 0.7, size: 3 });

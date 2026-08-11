@@ -4,6 +4,7 @@ import { PALETTE } from "../engine/Game.js";
 import { Save } from "../systems/Save.js";
 import { CATEGORIES } from "../data/skins.js";
 import { MenuScene } from "./MenuScene.js";
+import { audio } from "../engine/Audio.js";
 
 export class ShopScene extends Scene {
   constructor(game) {
@@ -34,6 +35,7 @@ export class ShopScene extends Scene {
     if (this.toastT > 0) this.toastT -= dt;
 
     if (input.justPressed("escape", "backspace") || input.tapIn(this._backBtn())) {
+      audio.play("click");
       this.game.changeScene(new MenuScene(this.game));
       return;
     }
@@ -47,12 +49,12 @@ export class ShopScene extends Scene {
     // 触屏
     if (input.pointer.justDown) {
       const catR = this._catRects();
-      for (let i = 0; i < catR.length; i++) if (input.tapIn(catR[i])) { this.cat = i; this.sel = 0; }
+      for (let i = 0; i < catR.length; i++) if (input.tapIn(catR[i])) { audio.play("click"); this.cat = i; this.sel = 0; }
       const rowR = this._rowRects();
       for (let i = 0; i < rowR.length; i++) {
         if (input.tapIn(rowR[i])) {
           if (this.sel === i) this._confirm(); // 再次点选中项 = 确认
-          else this.sel = i;
+          else { audio.play("click"); this.sel = i; }
         }
       }
       if (input.tapIn(this._confirmBtn())) this._confirm();
@@ -60,6 +62,7 @@ export class ShopScene extends Scene {
   }
 
   _confirm() {
+    audio.play("click");
     const cat = this.category.key;
     const skin = this.current;
     if (Save.isOwned(this.save, cat, skin.id)) {

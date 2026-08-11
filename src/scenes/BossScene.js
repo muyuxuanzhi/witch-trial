@@ -11,6 +11,7 @@ import { Save } from "../systems/Save.js";
 import { getLevelBoss, getLevel, TOTAL_LEVELS } from "../data/levels.js";
 import { Difficulty } from "../data/difficulty.js";
 import { MenuScene } from "./MenuScene.js";
+import { audio } from "../engine/Audio.js";
 
 // 全局难度系数（肉鸽爽游：玩家肉、能连续输出，Boss 耐打能撑30秒+、弹幕稀疏好躲）
 const PLAYER_MAX_HP = 40;         // 玩家基础血量（长血条，很肉）
@@ -127,8 +128,8 @@ export class BossScene extends Scene {
 
     if (this.state === "paused") {
       const b = this._pauseMenuButtons();
-      if (input.justPressed("p", "escape") || input.tapIn(b.resume)) this.state = "fight";
-      else if (input.tapIn(b.exit)) this.game.changeScene(new MenuScene(this.game));
+      if (input.justPressed("p", "escape") || input.tapIn(b.resume)) { audio.play("click"); this.state = "fight"; }
+      else if (input.tapIn(b.exit)) { audio.play("click"); this.game.changeScene(new MenuScene(this.game)); }
       return;
     }
 
@@ -139,11 +140,11 @@ export class BossScene extends Scene {
       if (this.endT > 0.5) {
         const b = this._endButtons();
         if (this.state === "win") {
-          if (input.justPressed("enter", " ") || input.tapIn(b.next)) this._goNext();
-          else if (input.justPressed("escape") || input.tapIn(b.menu)) this._goSelect();
+          if (input.justPressed("enter", " ") || input.tapIn(b.next)) { audio.play("click"); this._goNext(); }
+          else if (input.justPressed("escape") || input.tapIn(b.menu)) { audio.play("click"); this._goSelect(); }
         } else {
-          if (input.justPressed("enter", " ") || input.tapIn(b.next)) this._retry();
-          else if (input.justPressed("escape") || input.tapIn(b.menu)) this.game.changeScene(new MenuScene(this.game));
+          if (input.justPressed("enter", " ") || input.tapIn(b.next)) { audio.play("click"); this._retry(); }
+          else if (input.justPressed("escape") || input.tapIn(b.menu)) { audio.play("click"); this.game.changeScene(new MenuScene(this.game)); }
         }
       }
       return;
@@ -151,6 +152,7 @@ export class BossScene extends Scene {
 
     // 暂停
     if (input.justPressed("p", "escape") || input.tapIn(this._pauseBtn())) {
+      audio.play("click");
       this.state = "paused";
       return;
     }
@@ -263,6 +265,7 @@ export class BossScene extends Scene {
   _collectStar() {
     const p = this.player;
     this.starCollected++;
+    audio.play("rareStar");
     // 回血：普通 +6；地狱 3 血制下最多回 1 滴（避免瞬间回满，无敌才是核心收益）
     p.hp = Math.min(p.maxHp, p.hp + (this.diff.bossLifeMode ? 1 : 6));
     // 火力狂暴 5 秒（叠加时间）
@@ -483,6 +486,7 @@ export class BossScene extends Scene {
           if (p.invuln <= 0) {
             p.hp -= PLAYER_HIT_DMG;
             p.invuln = PLAYER_INVULN;
+            audio.play("hit");
             this.particles.burst(p.x, p.y, PALETTE.danger, 12, { speed: 110, life: 0.5, size: 3 });
             if (p.hp <= 0) this._lose();
           }
@@ -511,6 +515,7 @@ export class BossScene extends Scene {
     this.state = "lose";
     this.endT = 0;
     this.stars = [];
+    audio.play("death");
     this.particles.burst(this.player.x, this.player.y, PALETTE.danger, 30, { speed: 160, life: 0.9, size: 3 });
   }
 

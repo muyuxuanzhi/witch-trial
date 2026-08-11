@@ -6,6 +6,7 @@ import { BUFFS } from "../data/buffs.js";
 import { BOSSES } from "../data/bosses.js";
 import { WITCH_FORMS } from "../data/witchForms.js";
 import { MenuScene } from "./MenuScene.js";
+import { audio } from "../engine/Audio.js";
 
 // 角色设定图（仓库 assets 目录）
 const CHAR_IMG = new Image();
@@ -33,6 +34,7 @@ export class CodexScene extends Scene {
     this.t += dt;
 
     if (input.justPressed("escape", "backspace") || input.tapIn(this._backBtn())) {
+      audio.play("click");
       this.game.changeScene(new MenuScene(this.game));
       return;
     }
@@ -44,7 +46,7 @@ export class CodexScene extends Scene {
     // 触屏：点标签切页
     if (input.pointer && input.pointer.justDown) {
       const tr = this._tabRects();
-      for (let i = 0; i < tr.length; i++) if (input.tapIn(tr[i])) { this.tab = i; this.scroll = 0; }
+      for (let i = 0; i < tr.length; i++) if (input.tapIn(tr[i])) { audio.play("click"); this.tab = i; this.scroll = 0; }
     }
   }
 

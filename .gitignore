@@ -9,3 +9,6 @@ dist/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 音频demo试听素材（原始wav+预览mp4，仅供内部试听挑选，不参与游戏运行）
+assets/audio_demo/
