@@ -131,11 +131,11 @@ export class CodexScene extends Scene {
     ctx.fillRect(16, y - gap / 2 - 0.5, W - 32, 1);
     // 黄金魔女卡片
     y = this._renderCharBlock(ctx, W, y, blockH,
-      GOLDEN_IMG, "露娜 · 黄金魔女", "#ffcf5c", "#ffcf5c", [
+      GOLDEN_IMG, "金橙 · 黄金魔女", "#ffcf5c", "#ffcf5c", [
       "慵懒的电波系魔女。爱吃甜食尤其钟爱",
       "坚果巧克力，喜欢一切金灿灿的东西。",
-      "曾立下豪言——通过试炼的话，就给自己",
-      "买 10 万箱金箔坚果巧克力！",
+      "她的大魔女朋友说：只要金橙能通过试",
+      "炼，就给她买 10 万箱金箔坚果巧克力！",
     ], [
       "可通过商城解锁皮肤（150 金币）",
       "解锁后同样从森林魔女初始形态开始。",
