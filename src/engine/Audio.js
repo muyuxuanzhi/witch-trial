@@ -13,6 +13,11 @@
 // 3. 可以给 BGM 和每种音效分别接一个 GainNode，独立、精确地控制音量，
 //    解决“音效被 BGM 盖住听不见”的问题（之前所有音效共用同一个音量倍数，
 //    但各段素材原始响度不同，导致有的音效相对 BGM 音量偏小）。
+//
+// 重要：本模块任何环节（AudioContext 不可用 / 解码失败 / 浏览器策略限制等）
+// 出问题都只应“听不到声音”，绝不能抛出未捕获异常向外传播——否则会打断
+// 场景切换所在的 requestAnimationFrame 循环，导致整个游戏卡死（点哪都没反应）。
+// 因此所有对外方法、以及 AudioContext 的创建，都包了 try/catch 兜底。
 const BASE = "assets/audio/";
 
 const SFX_FILES = {
@@ -63,150 +68,184 @@ class AudioManager {
     this._pendingBgm = null;     // 解锁前排队等待播放的 BGM id
 
     this._unlocked = false;      // 浏览器要求一次用户交互后才允许真正出声
+    this._ctxFailed = false;     // AudioContext 不可用/创建失败时置位，避免反复重试
 
-    // 提前建好 AudioContext 并预解码所有素材：不需要用户交互也能 fetch+decode，
-    // 真正需要用户手势的只是"resume 播放"，这样首次播放时不会有加载卡顿。
-    this._ensureCtx();
-    this._preloadAll();
-
-    const unlock = () => this._unlock();
-    window.addEventListener("pointerdown", unlock, { once: true });
-    window.addEventListener("keydown", unlock, { once: true });
-    window.addEventListener("touchstart", unlock, { once: true, passive: true });
+    // 注意：这里只绑定"解锁"监听，不在构造函数里创建 AudioContext / 发网络请求，
+    // 尽量保证 import 这个模块本身绝对不会有副作用报错（哪怕运行环境完全不支持音频）。
+    try {
+      const unlock = () => this._unlock();
+      window.addEventListener("pointerdown", unlock, { once: true });
+      window.addEventListener("keydown", unlock, { once: true });
+      window.addEventListener("touchstart", unlock, { once: true, passive: true });
+    } catch (e) { /* 忽略：极端环境下 window 事件绑定失败也不影响游戏主体 */ }
   }
 
   _ensureCtx() {
     if (this.ctx) return this.ctx;
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return null;
-    this.ctx = new AC();
-    this._masterGain = this.ctx.createGain();
-    this._masterGain.connect(this.ctx.destination);
-    this._sfxBus = this.ctx.createGain();
-    this._sfxBus.gain.value = this.muted ? 0 : this.sfxVol;
-    this._sfxBus.connect(this._masterGain);
-    this._bgmBus = this.ctx.createGain();
-    this._bgmBus.gain.value = this.muted ? 0 : this.bgmVol;
-    this._bgmBus.connect(this._masterGain);
-    return this.ctx;
+    if (this._ctxFailed) return null;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) { this._ctxFailed = true; return null; }
+      const ctx = new AC();
+      const masterGain = ctx.createGain();
+      masterGain.connect(ctx.destination);
+      const sfxBus = ctx.createGain();
+      sfxBus.gain.value = this.muted ? 0 : this.sfxVol;
+      sfxBus.connect(masterGain);
+      const bgmBus = ctx.createGain();
+      bgmBus.gain.value = this.muted ? 0 : this.bgmVol;
+      bgmBus.connect(masterGain);
+      this.ctx = ctx;
+      this._masterGain = masterGain;
+      this._sfxBus = sfxBus;
+      this._bgmBus = bgmBus;
+      // 拿到可用的 ctx 后才开始后台预解码素材，避免播放时的加载卡顿。
+      this._preloadAll();
+      return ctx;
+    } catch (e) {
+      this._ctxFailed = true;
+      return null;
+    }
   }
 
   _preloadAll() {
-    const urls = [
-      ...Object.values(SFX_FILES),
-      ...Object.values(BGM_FILES),
-    ].map((f) => BASE + f);
-    for (const url of urls) this._loadBuffer(url).catch(() => {});
+    try {
+      const urls = [
+        ...Object.values(SFX_FILES),
+        ...Object.values(BGM_FILES),
+      ].map((f) => BASE + f);
+      for (const url of urls) this._loadBuffer(url).catch(() => {});
+    } catch (e) { /* 忽略 */ }
   }
 
   _loadBuffer(url) {
-    if (this._buffers[url]) return Promise.resolve(this._buffers[url]);
-    if (this._loadPromises[url]) return this._loadPromises[url];
-    const ctx = this._ensureCtx();
-    if (!ctx) return Promise.reject(new Error("no AudioContext"));
-    const p = fetch(url)
-      .then((r) => r.arrayBuffer())
-      .then((ab) => ctx.decodeAudioData(ab))
-      .then((buf) => {
-        this._buffers[url] = buf;
-        delete this._loadPromises[url];
-        return buf;
-      })
-      .catch((e) => {
-        delete this._loadPromises[url];
-        throw e;
-      });
-    this._loadPromises[url] = p;
-    return p;
+    try {
+      if (this._buffers[url]) return Promise.resolve(this._buffers[url]);
+      if (this._loadPromises[url]) return this._loadPromises[url];
+      const ctx = this._ensureCtx();
+      if (!ctx) return Promise.reject(new Error("no AudioContext"));
+      const p = fetch(url)
+        .then((r) => r.arrayBuffer())
+        .then((ab) => ctx.decodeAudioData(ab))
+        .then((buf) => {
+          this._buffers[url] = buf;
+          delete this._loadPromises[url];
+          return buf;
+        })
+        .catch((e) => {
+          delete this._loadPromises[url];
+          throw e;
+        });
+      this._loadPromises[url] = p;
+      return p;
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 
-  async _unlock() {
-    if (this._unlocked) return;
-    this._unlocked = true;
-    const ctx = this._ensureCtx();
-    if (ctx && ctx.state === "suspended") {
-      try { await ctx.resume(); } catch (e) { /* 忽略 */ }
-    }
-    if (this._pendingBgm) {
-      const id = this._pendingBgm;
-      this._pendingBgm = null;
-      this.playBgm(id);
-    }
+  _unlock() {
+    try {
+      if (this._unlocked) return;
+      this._unlocked = true;
+      const ctx = this._ensureCtx();
+      if (ctx && ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
+      if (this._pendingBgm) {
+        const id = this._pendingBgm;
+        this._pendingBgm = null;
+        this.playBgm(id);
+      }
+    } catch (e) { /* 忽略：解锁失败最多是没声音，不影响游戏运行 */ }
   }
 
   // 播放一次性音效，可重叠播放（如连续拾取）；用完自动释放，不会累积节点。
   play(id) {
-    if (this.muted) return;
-    const file = SFX_FILES[id];
-    if (!file) return;
-    const ctx = this._ensureCtx();
-    if (!ctx) return;
-    const url = BASE + file;
-    this._loadBuffer(url)
-      .then((buf) => {
-        if (this.muted) return;
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        const gain = ctx.createGain();
-        gain.gain.value = SFX_GAIN[id] != null ? SFX_GAIN[id] : 1;
-        src.connect(gain);
-        gain.connect(this._sfxBus);
-        src.onended = () => {
-          try { src.disconnect(); gain.disconnect(); } catch (e) { /* 忽略 */ }
-        };
-        src.start(0);
-      })
-      .catch(() => { /* 加载失败时静默跳过，不影响游戏 */ });
+    try {
+      if (this.muted) return;
+      const file = SFX_FILES[id];
+      if (!file) return;
+      const ctx = this._ensureCtx();
+      if (!ctx) return;
+      const url = BASE + file;
+      this._loadBuffer(url)
+        .then((buf) => {
+          try {
+            if (this.muted) return;
+            const src = ctx.createBufferSource();
+            src.buffer = buf;
+            const gain = ctx.createGain();
+            gain.gain.value = SFX_GAIN[id] != null ? SFX_GAIN[id] : 1;
+            src.connect(gain);
+            gain.connect(this._sfxBus);
+            src.onended = () => {
+              try { src.disconnect(); gain.disconnect(); } catch (e2) { /* 忽略 */ }
+            };
+            src.start(0);
+          } catch (e2) { /* 忽略：单次播放失败不影响后续 */ }
+        })
+        .catch(() => { /* 加载失败时静默跳过，不影响游戏 */ });
+    } catch (e) { /* 忽略 */ }
   }
 
   // 播放/切换循环 BGM；同一首正在播放（或正在加载）时不重复触发。
   playBgm(id) {
-    if (!BGM_FILES[id]) return;
-    if (!this._unlocked) {
-      this._pendingBgm = id;
+    try {
+      if (!BGM_FILES[id]) return;
+      if (!this._unlocked) {
+        this._pendingBgm = id;
+        this._wantedBgmId = id;
+        return;
+      }
+      if (this._wantedBgmId === id) return;
       this._wantedBgmId = id;
-      return;
-    }
-    if (this._wantedBgmId === id) return;
-    this._wantedBgmId = id;
-    const ctx = this._ensureCtx();
-    if (!ctx) return;
-    const url = BASE + BGM_FILES[id];
-    this._loadBuffer(url)
-      .then((buf) => {
-        // 加载完成前目标又被切换了（比如快速连续换场景），放弃这次，避免叠放两路 BGM
-        if (this._wantedBgmId !== id) return;
-        this._stopBgmSource();
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        src.loop = true;
-        src.connect(this._bgmBus);
-        src.start(0);
-        this._bgmSource = src;
-        this._curBgmId = id;
-      })
-      .catch(() => { /* 忽略加载失败 */ });
+      const ctx = this._ensureCtx();
+      if (!ctx) return;
+      const url = BASE + BGM_FILES[id];
+      this._loadBuffer(url)
+        .then((buf) => {
+          try {
+            // 加载完成前目标又被切换了（比如快速连续换场景），放弃这次，避免叠放两路 BGM
+            if (this._wantedBgmId !== id) return;
+            this._stopBgmSource();
+            const src = ctx.createBufferSource();
+            src.buffer = buf;
+            src.loop = true;
+            src.connect(this._bgmBus);
+            src.start(0);
+            this._bgmSource = src;
+            this._curBgmId = id;
+          } catch (e2) { /* 忽略 */ }
+        })
+        .catch(() => { /* 忽略加载失败 */ });
+    } catch (e) { /* 忽略：绝不让 BGM 播放失败影响场景切换 */ }
   }
 
   _stopBgmSource() {
-    if (this._bgmSource) {
-      try { this._bgmSource.stop(); this._bgmSource.disconnect(); } catch (e) { /* 忽略 */ }
-      this._bgmSource = null;
-    }
-    this._curBgmId = null;
+    try {
+      if (this._bgmSource) {
+        try { this._bgmSource.stop(); this._bgmSource.disconnect(); } catch (e) { /* 忽略 */ }
+        this._bgmSource = null;
+      }
+      this._curBgmId = null;
+    } catch (e) { /* 忽略 */ }
   }
 
   stopBgm() {
-    this._stopBgmSource();
-    this._wantedBgmId = null;
-    this._pendingBgm = null;
+    try {
+      this._stopBgmSource();
+      this._wantedBgmId = null;
+      this._pendingBgm = null;
+    } catch (e) { /* 忽略 */ }
   }
 
   setMuted(m) {
-    this.muted = !!m;
-    try { localStorage.setItem(MUTE_KEY, this.muted ? "1" : "0"); } catch (e) { /* 忽略存储失败 */ }
-    if (this._bgmBus) this._bgmBus.gain.value = this.muted ? 0 : this.bgmVol;
-    if (this._sfxBus) this._sfxBus.gain.value = this.muted ? 0 : this.sfxVol;
+    try {
+      this.muted = !!m;
+      try { localStorage.setItem(MUTE_KEY, this.muted ? "1" : "0"); } catch (e2) { /* 忽略存储失败 */ }
+      if (this._bgmBus) this._bgmBus.gain.value = this.muted ? 0 : this.bgmVol;
+      if (this._sfxBus) this._sfxBus.gain.value = this.muted ? 0 : this.sfxVol;
+    } catch (e) { /* 忽略 */ }
   }
 
   toggleMute() {

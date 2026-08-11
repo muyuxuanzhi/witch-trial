@@ -47,9 +47,20 @@ export class Game {
   }
 
   changeScene(scene) {
-    if (this.scene && this.scene.onExit) this.scene.onExit();
+    // 场景生命周期钩子出错（比如某个子系统抛异常）绝不应该阻断场景切换本身，
+    // 否则会卡在旧场景上，表现为"点了没反应/进不去"。这里兜底捕获并打日志，
+    // 保证 this.scene 一定会切换成功。
+    try {
+      if (this.scene && this.scene.onExit) this.scene.onExit();
+    } catch (e) {
+      console.error("[Game] 场景 onExit 出错：", e);
+    }
     this.scene = scene;
-    if (this.scene.onEnter) this.scene.onEnter();
+    try {
+      if (this.scene.onEnter) this.scene.onEnter();
+    } catch (e) {
+      console.error("[Game] 场景 onEnter 出错：", e);
+    }
   }
 
   start() {
@@ -61,8 +72,14 @@ export class Game {
       this.time += dt;
 
       if (this.scene) {
-        this.scene.update(dt, this.input);
-        this.scene.render(this.ctx);
+        // 同理：单帧 update/render 出错也不应让整条 requestAnimationFrame
+        // 循环永久停摆（否则游戏会彻底卡死，只能刷新页面）。
+        try {
+          this.scene.update(dt, this.input);
+          this.scene.render(this.ctx);
+        } catch (e) {
+          console.error("[Game] 场景运行出错：", e);
+        }
       }
       this.input.postUpdate();
       this._raf = requestAnimationFrame(loop);
