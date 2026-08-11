@@ -509,6 +509,17 @@ export class BossScene extends Scene {
       // 记录通关 + 奖励 + 解锁下一关
       Save.clearLevel(this.save, this.level.id, this.level.index, TOTAL_LEVELS, this.reward);
   }
+    // 胜利判定出来就立刻在后台预取"下一步"要用到的场景模块，结算画面展示
+    // 期间正好用来把加载做完，避免点击"下一关/下一轮"瞬间才发起请求造成卡顿。
+    this._nextPromise = (this.endless
+      ? Promise.all([import("../data/levels.js"), import("./RunScene.js")])
+      : this.level.index < TOTAL_LEVELS
+        ? import("./IntroScene.js")
+        : import("./LevelSelectScene.js")
+    ).catch((e) => {
+      console.warn("[BossScene] 预加载下一场景失败，将在切换时重试", e);
+      return null;
+    });
   }
 
   _lose() {
@@ -517,6 +528,11 @@ export class BossScene extends Scene {
     this.stars = [];
     audio.play("death");
     this.particles.burst(this.player.x, this.player.y, PALETTE.danger, 30, { speed: 160, life: 0.9, size: 3 });
+    // 失败结算展示期间预取重试所需的武器选择场景。
+    this._retryPromise = import("./WeaponSelectScene.js").catch((e) => {
+      console.warn("[BossScene] 预加载重试场景失败，将在切换时重试", e);
+      return null;
+    });
   }
 
   _goNext() {
@@ -532,15 +548,34 @@ if (this.endless) {
  totalTrial: this.carry.totalTrial || 0,
         trial: this.carry.trial || 0,
       };
-      Promise.all([import("../data/levels.js"), import("./RunScene.js")]).then(([lv, rs]) => {
-    this.game.changeScene(new rs.RunScene(this.game, lv.makeEndlessLevel(this.round + 1), carry));
-  });
+      const loader = this._nextPromise || Promise.all([import("../data/levels.js"), import("./RunScene.js")]);
+      loader
+        .then((r) => {
+          if (!r) throw new Error("next scene modules not loaded");
+          const [lv, rs] = r;
+          this.game.changeScene(new rs.RunScene(this.game, lv.makeEndlessLevel(this.round + 1), carry));
+        })
+        .catch((e) => {
+          console.warn("[BossScene] 进入下一轮失败，可再次点击重试", e);
+          this._navigating = false;
+          this._nextPromise = null;
+        });
     return;
     }
+    const loader = this._nextPromise || (this.level.index < TOTAL_LEVELS
+      ? import("./IntroScene.js")
+      : import("./LevelSelectScene.js"));
     if (this.level.index < TOTAL_LEVELS) {
-      import("./IntroScene.js").then((m) => {
-        this.game.changeScene(new m.IntroScene(this.game, getLevel(this.level.index + 1)));
-      });
+      loader
+        .then((m) => {
+          if (!m) throw new Error("IntroScene module not loaded");
+          this.game.changeScene(new m.IntroScene(this.game, getLevel(this.level.index + 1)));
+        })
+        .catch((e) => {
+          console.warn("[BossScene] 进入下一关失败，可再次点击重试", e);
+          this._navigating = false;
+          this._nextPromise = null;
+        });
  } else {
       // 通关全部 → 回选关（显示全通关）
       this._goSelect();
@@ -548,15 +583,31 @@ if (this.endless) {
   }
 
   _goSelect() {
-    import("./LevelSelectScene.js").then((m) => {
-      this.game.changeScene(new m.LevelSelectScene(this.game));
-    });
+    const loader = this._nextPromise || import("./LevelSelectScene.js");
+    loader
+      .then((m) => {
+        if (!m) throw new Error("LevelSelectScene module not loaded");
+        this.game.changeScene(new m.LevelSelectScene(this.game));
+      })
+      .catch((e) => {
+        console.warn("[BossScene] 返回选关失败，可再次点击重试", e);
+        this._navigating = false;
+        this._nextPromise = null;
+      });
   }
 
   _retry() {
-    import("./WeaponSelectScene.js").then((m) => {
-      this.game.changeScene(new m.WeaponSelectScene(this.game, this.level, this.carry));
-    });
+    const loader = this._retryPromise || import("./WeaponSelectScene.js");
+    loader
+      .then((m) => {
+        if (!m) throw new Error("WeaponSelectScene module not loaded");
+        this.game.changeScene(new m.WeaponSelectScene(this.game, this.level, this.carry));
+      })
+      .catch((e) => {
+        console.warn("[BossScene] 重试失败，可再次点击重试", e);
+        this._navigating = false;
+        this._retryPromise = null;
+      });
   }
 
   render(ctx) {

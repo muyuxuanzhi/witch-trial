@@ -31,6 +31,14 @@ export class IntroScene extends Scene {
     this.idx = 0;
     this.charT = 0;       // 打字机计时
     this.done = false;    // 当前句是否显示完
+    // 对话一开始就在后台预取 RunScene 模块（及其依赖链），而不是等到对话
+    // 读完点击“开始试炼”那一刻才发起加载：这样有对话展示的这几秒时间可以
+    // 把模块请求 + 解析都提前做完，避免"点击瞬间"才发起一大串请求导致的
+    // 明显卡顿；弱网下也能大幅降低"点了没反应/进不去"的概率。
+    this._runScenePromise = import("./RunScene.js").catch((e) => {
+      console.warn("[IntroScene] 预加载 RunScene 失败，将在点击时重试", e);
+      return null;
+    });
   }
 
   _curFullText() {
@@ -63,10 +71,21 @@ export class IntroScene extends Scene {
     // 防止异步模块加载期间用户再次点击，重复触发切场景
     if (this._starting) return;
     this._starting = true;
-    // 动态导入避免循环依赖
-    import("./RunScene.js").then((m) => {
-      this.game.changeScene(new m.RunScene(this.game, this.level));
-    });
+    // 优先复用对话期间就已经在后台预取的 Promise（此时大概率已经加载完成，
+    // 几乎瞬间进入下一场景）；如果预取失败了（或还没建立），才现场再 import 一次。
+    const loader = this._runScenePromise || import("./RunScene.js");
+    loader
+      .then((m) => {
+        if (!m) throw new Error("RunScene module not loaded");
+        this.game.changeScene(new m.RunScene(this.game, this.level));
+      })
+      .catch((e) => {
+        // 加载失败（弱网/超时等）：不能让玩家卡在这里点了完全没反应——
+        // 重置状态允许再次点击重试，并现场发起一次全新的 import。
+        console.warn("[IntroScene] 进入关卡失败，可再次点击重试", e);
+        this._starting = false;
+        this._runScenePromise = null;
+      });
   }
 
   update(dt, input) {

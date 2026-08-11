@@ -44,7 +44,9 @@ export class MenuScene extends Scene {
     audio.play("click");
     if (i === 0) this.game.changeScene(new LevelSelectScene(this.game));
     else if (i === 1) {
-      import("./CodexScene.js").then((m) => this.game.changeScene(new m.CodexScene(this.game)));
+      import("./CodexScene.js")
+        .then((m) => this.game.changeScene(new m.CodexScene(this.game)))
+        .catch((e) => console.warn("[MenuScene] 打开图鉴失败", e));
     }
     else if (i === 2) this.game.changeScene(new ShopScene(this.game));
     else if (i === 3) this._cycleDifficulty(1); // 难度项：确认即切换

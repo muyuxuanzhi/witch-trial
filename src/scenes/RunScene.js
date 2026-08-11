@@ -206,9 +206,14 @@ export class RunScene extends Scene {
           this._leavingDead = true;
           audio.play("click");
           if (this.endless) {
-            import("../data/levels.js").then((m) => {
-              this.game.changeScene(new RunScene(this.game, m.makeEndlessLevel(1)));
-            });
+            import("../data/levels.js")
+              .then((m) => {
+                this.game.changeScene(new RunScene(this.game, m.makeEndlessLevel(1)));
+              })
+              .catch((e) => {
+                console.warn("[RunScene] 重开无限模式失败，可再次点击重试", e);
+                this._leavingDead = false;
+              });
           } else {
             this.game.changeScene(new RunScene(this.game, this.level));
           }
@@ -293,6 +298,13 @@ export class RunScene extends Scene {
     // 确保进化到最终形态用于展示（若未自然到达，仍以当前形态进Boss）
     this.particles.burst(this.player.cx, this.player.cy, PALETTE.gold, 30, { speed: 160, life: 0.9 });
     this.shake = 6;
+    // 到达目标的瞬间就在后台预取下一场景模块，而不是等 1.4 秒过场结束/
+    // 玩家点击那一刻才发起加载——过场展示期间正好用来把请求提前做完，
+    // 避免"进入下一阶段"瞬间的卡顿，弱网下也不容易卡死进不去。
+    this._weaponSelectPromise = import("./WeaponSelectScene.js").catch((e) => {
+      console.warn("[RunScene] 预加载 WeaponSelectScene 失败，将在切换时重试", e);
+      return null;
+    });
   }
 
   _enterWeaponSelect() {
@@ -307,9 +319,17 @@ export class RunScene extends Scene {
       totalTrial: this.totalTrial,
     trial: this.trial,
   };
-    import("./WeaponSelectScene.js").then((m) => {
-      this.game.changeScene(new m.WeaponSelectScene(this.game, this.level, carry));
-  });
+    const loader = this._weaponSelectPromise || import("./WeaponSelectScene.js");
+    loader
+      .then((m) => {
+        if (!m) throw new Error("WeaponSelectScene module not loaded");
+        this.game.changeScene(new m.WeaponSelectScene(this.game, this.level, carry));
+      })
+      .catch((e) => {
+        console.warn("[RunScene] 进入武器选择失败，可再次点击重试", e);
+        this._leavingGoal = false;
+        this._weaponSelectPromise = null;
+      });
   }
 
   _openChoose() {

@@ -19,6 +19,12 @@ export class WeaponSelectScene extends Scene {
     const owned = this.save.owned.weapon || ["wand"];
     const eq = this.save.equipped.weapon;
     this.sel = Math.max(0, WEAPONS.findIndex((w) => w.id === (owned.includes(eq) ? eq : owned[0])));
+    // 进入选武器界面就后台预取 BossScene 模块，玩家挑选武器这段时间正好
+    // 用来把加载做完，避免点击"进入弹幕战"瞬间才发起请求造成的卡顿。
+    this._bossScenePromise = import("./BossScene.js").catch((e) => {
+      console.warn("[WeaponSelectScene] 预加载 BossScene 失败，将在切换时重试", e);
+      return null;
+    });
   }
 
   _cardRects() {
@@ -67,9 +73,17 @@ export class WeaponSelectScene extends Scene {
     audio.play("click");
     // 记住装备
     Save.equip(this.save, "weapon", w.id);
-    import("./BossScene.js").then((m) => {
-      this.game.changeScene(new m.BossScene(this.game, this.level, w, this.carry));
-    });
+    const loader = this._bossScenePromise || import("./BossScene.js");
+    loader
+      .then((m) => {
+        if (!m) throw new Error("BossScene module not loaded");
+        this.game.changeScene(new m.BossScene(this.game, this.level, w, this.carry));
+      })
+      .catch((e) => {
+        console.warn("[WeaponSelectScene] 进入弹幕战失败，可再次点击重试", e);
+        this._starting = false;
+        this._bossScenePromise = null;
+      });
   }
 
   render(ctx) {

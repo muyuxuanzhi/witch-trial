@@ -32,9 +32,9 @@ const SFX_FILES = {
 // 各音效相对增益微调：原始素材响度不完全一致（click 天生比较“冲耳”，
 // 其余几个偏弱），这里单独放大后几个，让它们在 BGM 播放时也能被听清。
 const SFX_GAIN = {
-  collectStar: 1.5,
-  collectPotion: 1.5,
-  rareStar: 1.6,
+  collectStar: 1.0,
+  collectPotion: 1.0,
+  rareStar: 1.2,
   hit: 1.7,
   death: 1.7,
   click: 1.0,
@@ -88,10 +88,29 @@ class AudioManager {
       if (!AC) { this._ctxFailed = true; return null; }
       const ctx = new AC();
       const masterGain = ctx.createGain();
-      masterGain.connect(ctx.destination);
+      // 主输出限幅：多路音效/BGM 同时叠加时把峰值压住，避免任何一次意外的
+      // 多路重叠（连续拾取六芒星、快速连点等）在输出端直接削波产生刺耳爆音。
+      const masterLimiter = ctx.createDynamicsCompressor();
+      masterLimiter.threshold.value = -12;
+      masterLimiter.knee.value = 6;
+      masterLimiter.ratio.value = 12;
+      masterLimiter.attack.value = 0.003;
+      masterLimiter.release.value = 0.25;
+      masterGain.connect(masterLimiter);
+      masterLimiter.connect(ctx.destination);
       const sfxBus = ctx.createGain();
       sfxBus.gain.value = this.muted ? 0 : this.sfxVol;
-      sfxBus.connect(masterGain);
+      // 音效专用压缩：拾取物密集出现时会短时间内多次重叠播放同一音效，
+      // 未经压缩的话叠加响度会远超单次播放，听起来又大又刺耳；压缩器让
+      // 叠加几次也不会明显更炸耳。
+      const sfxLimiter = ctx.createDynamicsCompressor();
+      sfxLimiter.threshold.value = -20;
+      sfxLimiter.knee.value = 10;
+      sfxLimiter.ratio.value = 8;
+      sfxLimiter.attack.value = 0.002;
+      sfxLimiter.release.value = 0.15;
+      sfxBus.connect(sfxLimiter);
+      sfxLimiter.connect(masterGain);
       const bgmBus = ctx.createGain();
       bgmBus.gain.value = this.muted ? 0 : this.bgmVol;
       bgmBus.connect(masterGain);
