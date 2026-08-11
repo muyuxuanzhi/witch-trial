@@ -60,8 +60,10 @@ export class WeaponSelectScene extends Scene {
   }
 
   _start() {
+    if (this._starting) return;
     const w = WEAPONS[this.sel];
     if (!this._isOwned(w)) return;
+    this._starting = true;
     audio.play("click");
     // 记住装备
     Save.equip(this.save, "weapon", w.id);

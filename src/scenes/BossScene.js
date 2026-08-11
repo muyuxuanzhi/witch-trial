@@ -137,14 +137,14 @@ export class BossScene extends Scene {
       this.endT += dt;
       this.particles.update(dt);
       this._updateBullets(dt, true);
-      if (this.endT > 0.5) {
+      if (this.endT > 0.5 && !this._navigating) {
         const b = this._endButtons();
         if (this.state === "win") {
-          if (input.justPressed("enter", " ") || input.tapIn(b.next)) { audio.play("click"); this._goNext(); }
-          else if (input.justPressed("escape") || input.tapIn(b.menu)) { audio.play("click"); this._goSelect(); }
+          if (input.justPressed("enter", " ") || input.tapIn(b.next)) { this._navigating = true; audio.play("click"); this._goNext(); }
+          else if (input.justPressed("escape") || input.tapIn(b.menu)) { this._navigating = true; audio.play("click"); this._goSelect(); }
         } else {
-          if (input.justPressed("enter", " ") || input.tapIn(b.next)) { audio.play("click"); this._retry(); }
-          else if (input.justPressed("escape") || input.tapIn(b.menu)) { audio.play("click"); this.game.changeScene(new MenuScene(this.game)); }
+          if (input.justPressed("enter", " ") || input.tapIn(b.next)) { this._navigating = true; audio.play("click"); this._retry(); }
+          else if (input.justPressed("escape") || input.tapIn(b.menu)) { this._navigating = true; audio.play("click"); this.game.changeScene(new MenuScene(this.game)); }
         }
       }
       return;

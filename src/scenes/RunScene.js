@@ -164,7 +164,11 @@ export class RunScene extends Scene {
       this.goalT += dt;
       this.particles.update(dt);
       this.shake *= 0.9;
-      if (this.goalT > 1.4 || input.justPressed("enter", " ") || input.pointer.justDown) {
+      // _leavingGoal 防止异步切场景（import().then()）还没完成时，
+      // goalT>1.4 这个条件每帧持续成立，导致每帧都重复播放 click 音效
+      // （叠加成巨大噪音）并重复触发场景切换（造成切场景竞态、卡在半路）。
+      if (!this._leavingGoal && (this.goalT > 1.4 || input.justPressed("enter", " ") || input.pointer.justDown)) {
+        this._leavingGoal = true;
         audio.play("click");
         this._enterWeaponSelect();
       }
@@ -196,18 +200,20 @@ export class RunScene extends Scene {
       this.deadT += dt;
       this.particles.update(dt);
       this.shake *= 0.88;
-      if (this.deadT > 0.4) {
+      if (this.deadT > 0.4 && !this._leavingDead) {
         const b = this._deadButtons();
         if (input.justPressed("enter", " ") || input.tapIn(b.restart)) {
+          this._leavingDead = true;
           audio.play("click");
-   if (this.endless) {
-   import("../data/levels.js").then((m) => {
-         this.game.changeScene(new RunScene(this.game, m.makeEndlessLevel(1)));
+          if (this.endless) {
+            import("../data/levels.js").then((m) => {
+              this.game.changeScene(new RunScene(this.game, m.makeEndlessLevel(1)));
             });
           } else {
             this.game.changeScene(new RunScene(this.game, this.level));
           }
         } else if (input.justPressed("escape", "backspace") || input.tapIn(b.menu)) {
+          this._leavingDead = true;
           audio.play("click");
           this.game.changeScene(new MenuScene(this.game));
         }

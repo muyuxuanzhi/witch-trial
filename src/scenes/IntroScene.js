@@ -60,6 +60,9 @@ export class IntroScene extends Scene {
   }
 
   _startGame() {
+    // 防止异步模块加载期间用户再次点击，重复触发切场景
+    if (this._starting) return;
+    this._starting = true;
     // 动态导入避免循环依赖
     import("./RunScene.js").then((m) => {
       this.game.changeScene(new m.RunScene(this.game, this.level));
@@ -71,7 +74,7 @@ export class IntroScene extends Scene {
     this.charT += dt;
  this.bg.update(dt, 40);
 
-    if (input.justPressed("enter", " ") || input.pointer.justDown) {
+    if (!this._starting && (input.justPressed("enter", " ") || input.pointer.justDown)) {
   this._advance();
     }
   }
