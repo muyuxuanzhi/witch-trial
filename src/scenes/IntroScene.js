@@ -13,20 +13,23 @@ export class IntroScene extends Scene {
     this.save = Save.load();
     this.level = level || null;
     this.bg = new Background(game.width, game.height, getSkin("background", this.save.equipped.background));
+    // 说话人：跟随玩家当前装备的角色皮肤，而不是固定写死叶林
+    const charSkin = getSkin("character", this.save.equipped.character);
+    const who = charSkin?.charName || "叶林";
     // 对话按关卡定制
     const lvName = this.level ? this.level.name : "";
     const bossName = this.level ? this.level.subtitle : "";
     this.lines = this.level ? (this.level.endless ? [
-      { who: "叶林", text: "♾ 无尽试炼……星光没有尽头呢。" },
-      { who: "叶林", text: "Boss 会一直降临，收集度与属性也会一直叠加……" },
-      { who: "叶林", text: "看我能撑到第几轮吧——出发！" },
+      { who, text: "♾ 无尽试炼……星光没有尽头呢。" },
+      { who, text: "Boss 会一直降临，收集度与属性也会一直叠加……" },
+      { who, text: "看我能撑到第几轮吧——出发！" },
     ] : [
-      { who: "叶林", text: `第${this.level.index}关 · ${lvName}` },
-      { who: "叶林", text: "呼……我准备好了。" },
-      { who: "叶林", text: `那……我的魔女试炼，${bossName}，现在开始！` },
+      { who, text: `第${this.level.index}关 · ${lvName}` },
+      { who, text: "呼……我准备好了。" },
+      { who, text: `那……我的魔女试炼，${bossName}，现在开始！` },
     ]) : [
-      { who: "叶林", text: "深呼吸……我准备好了。" },
-      { who: "叶林", text: "我的魔女试炼，现在开始！" },
+      { who, text: "深呼吸……我准备好了。" },
+      { who, text: "我的魔女试炼，现在开始！" },
     ];
     this.idx = 0;
     this.charT = 0;       // 打字机计时
