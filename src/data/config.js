@@ -5,8 +5,8 @@ export const CONFIG = {
   laneTopY: [104, 176],  // 玩家在 [上轨, 下轨] 的 y（顶部坐标）
   laneMidY: 140,         // 上下轨中间线（稀有金色六芒星漂浮位置，玩家切轨路径经过）
   playerX: 96,
-  playerW: 16,
-  playerH: 22,
+  playerW: 20,   // 立绘缩小到与Boss战接近的尺寸后，碰撞箱同步放大一些，让判定范围更贴近视觉体型（原16，视觉与判定过于悬殊）
+  playerH: 28,   // 原22，同上
 
   // 速度与难度
   startSpeed: 140,       // 初始滚动速度 px/s

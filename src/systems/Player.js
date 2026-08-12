@@ -142,10 +142,11 @@ if (f.hat) {
     }
   }
 
-  // 画角色立绘：碰撞框仅 16x22px，立绘是骑扫帚横向飞行构图（已离线裁边贴合内容），
+  // 画角色立绘：立绘是骑扫帚横向飞行构图（已离线裁边贴合内容+统一同阶段三人体型），
   // 按固定展示高度等比缩放，扫帚/脚部贴齐碰撞框底部（=贴近赛道），左右居中。
+  // 展示高度调到与 Boss 战立绘（30px）基本一致，避免跑酷时立绘过大导致视觉穿模。
   _drawSprite(ctx, sprite, px, py, w, h) {
-    const drawH = 50; // 立绘展示高度，觉得太大/太小可以直接改这个数
+    const drawH = 32; // 立绘展示高度，觉得太大/太小可以直接改这个数
     const drawW = (sprite.width / sprite.height) * drawH;
     const dx = Math.round(px + w / 2 - drawW / 2);
     const dy = Math.round(py + h - drawH);
