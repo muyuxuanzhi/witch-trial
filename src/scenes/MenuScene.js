@@ -97,7 +97,10 @@ export class MenuScene extends Scene {
     ctx.fillText("W I T C H   T R I A L", W / 2, H * 0.26 + 26);
     ctx.fillStyle = "rgba(233,220,255,0.55)";
     ctx.font = "9px monospace";
-    ctx.fillText("见习魔女 · 叶林", W / 2, H * 0.26 + 42);
+    // 副标题跟随当前装备的角色皮肤，而不是固定写死叶林
+    const charSkin = getSkin("character", this.save.equipped.character);
+    const subtitle = charSkin ? `${charSkin.charName} · ${charSkin.name}` : "叶林 · 森林魔女";
+    ctx.fillText(subtitle, W / 2, H * 0.26 + 42);
 
     const rects = this._itemRects();
     ctx.font = "13px monospace";

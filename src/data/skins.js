@@ -1,7 +1,7 @@
 // 皮肤数据：角色 / 背景 / 障碍 / 武器。以"配色方案"实现，后续可无缝替换为自制像素美术
 export const CHARACTER_SKINS = [
   { id: "default", name: "森林魔女", charName: "叶林", price: 0,   body: "#3d2a54", outline: "#b96bff", visor: "#4fe0d0", trail: "#4fe0d0", desc: "叶林 · 森林魔女学院的见习生。每一位魔女都从最初始的水手服少女形态出发，通过试炼逐级进化。" },
-  { id: "cyan",    name: "碧海魔女", charName: "叶林", price: 40,  body: "#123240", outline: "#4fe0d0", visor: "#b96bff", trail: "#4fe0d0", desc: "深海一般的静谧配色。从水手服少女初始形态起步，凭借星光进化成长。" },
+  { id: "cyan",    name: "碧海魔女", charName: "海於", price: 40,  body: "#123240", outline: "#4fe0d0", visor: "#b96bff", trail: "#4fe0d0", desc: "海於 · 喜欢独处的碧海之族，随行的契约鲸鱼形影不离。深海般的静谧配色。", pet: { color: "#4fc3ff", shieldInterval: 30 } },
   { id: "crimson", name: "绯红魔女", charName: "叶林", price: 80,  body: "#3a1020", outline: "#ff5c8a", visor: "#ffcf5c", trail: "#ff5c8a", desc: "绯红如血的高贵配色。同样从零开始，在试炼中积攒星光、进化形态。" },
   { id: "gold",    name: "黄金魔女", charName: "金橙", price: 150, body: "#3a2e10", outline: "#ffcf5c", visor: "#ffffff", trail: "#ffcf5c", desc: "金橙 · 慵懒的电波系魔女。最爱坚果巧克力与一切金灿灿。初始形态起跑，试炼之路漫漫其修远兮。" },
 ];

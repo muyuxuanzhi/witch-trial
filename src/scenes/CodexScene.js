@@ -13,6 +13,8 @@ const CHAR_IMG = new Image();
 CHAR_IMG.src = "assets/witch-character.png";
 const GOLDEN_IMG = new Image();
 GOLDEN_IMG.src = "assets/golden-witch.png";
+const HAIYU_IMG = new Image();
+HAIYU_IMG.src = "assets/haiyu-witch.png";
 
 const TABS = ["角色", "Buff 增益", "Boss 图鉴"];
 
@@ -134,12 +136,33 @@ export class CodexScene extends Scene {
       GOLDEN_IMG, "金橙 · 黄金魔女", "#ffcf5c", "#ffcf5c", [
       "慵懒的电波系魔女。爱吃甜食尤其钟爱",
       "坚果巧克力，喜欢一切金灿灿的东西。",
-      "她的大魔女朋友说：只要金橙能通过试",
-      "炼，就给她买 10 万箱金箔坚果巧克力！",
+      "为了通关后兑现大魔女朋友的约定——",
+      "10 万箱金箔坚果巧克力，金橙拼尽全力。",
     ], [
       "可通过商城解锁皮肤（150 金币）",
       "解锁后同样从森林魔女初始形态开始。",
       "口头禅：「为了金灿灿和甜品……power！！！」",
+    ], []);
+    y += gap;
+    // 分隔线
+    ctx.fillStyle = "rgba(79,195,255,0.15)";
+    ctx.fillRect(16, y - gap / 2 - 0.5, W - 32, 1);
+    // 海於卡片
+    y = this._renderCharBlock(ctx, W, y, blockH + 20,
+      HAIYU_IMG, "海於 · 碧海魔女", "#4fc3ff", "#4fc3ff", [
+      "喜欢独处，胜过热闹的人群。",
+      "族群天生拥有海之力，通过试炼就能",
+      "让海之力进化得更庞大。",
+      "为了大魔女补贴——独栋小屋，她带着",
+      "契约鲸鱼一起来了。",
+    ], [
+      "先天能力：跑酷自带鲸鱼跟随，每 30",
+      "秒攒 1 层不叠加的护盾，挡下一次碰",
+      "撞伤害；Boss 战鲸鱼协同攻击。",
+      "可通过商城解锁皮肤（40 金币）",
+      "口头禅：「嗯？你说作弊？那可是我",
+      "海之力契约的伙伴哎，也就是说是我",
+      "的一部分，哼哼~」",
     ], []);
     const totalH = y + gap;
     this._maxScroll = Math.max(0, totalH + this.scroll - (H - 20));

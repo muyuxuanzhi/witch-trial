@@ -14,36 +14,73 @@ export class IntroScene extends Scene {
     this.level = level || null;
     this.bg = new Background(game.width, game.height, getSkin("background", this.save.equipped.background));
     // 说话人：跟随玩家当前装备的角色皮肤，而不是固定写死叶林；
-    // 台词内容也按角色人设分开写（叶林认真型 / 金橙慵懒电波型），不是简单换个名字。
+    // 台词内容也按角色人设分开写（叶林认真型 / 金橙慵懒电波型 / 海於冷淡独处型），
+    // 不是简单换个名字。
     const charSkin = getSkin("character", this.save.equipped.character);
     const who = charSkin?.charName || "叶林";
     const isGolden = who === "金橙";
+    const isHaiyu = who === "海於";
     // 对话按关卡定制
     const lvName = this.level ? this.level.name : "";
     const bossName = this.level ? this.level.subtitle : "";
-    this.lines = this.level ? (this.level.endless ? (isGolden ? [
-      { who, text: "♾ 无尽试炼……那岂不是巧克力也能无限吃？" },
-      { who, text: "Boss 一直来也没关系，正好当运动，不然甜食都要堆成山了。" },
-      { who, text: "为了金灿灿和甜品……power！！！出发～" },
-    ] : [
-      { who, text: "♾ 无尽试炼……星光没有尽头呢。" },
-      { who, text: "Boss 会一直降临，收集度与属性也会一直叠加……" },
-      { who, text: "看我能撑到第几轮吧——出发！" },
-    ]) : (isGolden ? [
-      { who, text: `第${this.level.index}关 · ${lvName}` },
-      { who, text: "唔……先让我打个哈欠。呼啊——好，精神了（一半）。" },
-      { who, text: `那……为了金灿灿和甜品，${bossName}，就交给我了！` },
-    ] : [
-      { who, text: `第${this.level.index}关 · ${lvName}` },
-      { who, text: "呼……我准备好了。" },
-      { who, text: `那……我的魔女试炼，${bossName}，现在开始！` },
-    ])) : (isGolden ? [
-      { who, text: "唔……那就慢慢开始吧，别催我。" },
-      { who, text: "为了金灿灿和甜品……power！！！" },
-    ] : [
-      { who, text: "深呼吸……我准备好了。" },
-      { who, text: "我的魔女试炼，现在开始！" },
-    ]);
+    if (this.level && this.level.endless) {
+      if (isGolden) {
+        this.lines = [
+          { who, text: "♾ 无尽试炼……那岂不是巧克力也能无限吃？" },
+          { who, text: "Boss 一直来也没关系，正好当运动，不然甜食都要堆成山了。" },
+          { who, text: "为了金灿灿和甜品……power！！！出发～" },
+        ];
+      } else if (isHaiyu) {
+        this.lines = [
+          { who, text: "♾ 无尽……那我们俩就慢慢耗着。" },
+          { who, text: "累了就换你顶一会儿，我不会说出去的。" },
+          { who, text: "出发。" },
+        ];
+      } else {
+        this.lines = [
+          { who, text: "♾ 无尽试炼……星光没有尽头呢。" },
+          { who, text: "Boss 会一直降临，收集度与属性也会一直叠加……" },
+          { who, text: "看我能撑到第几轮吧——出发！" },
+        ];
+      }
+    } else if (this.level) {
+      if (isGolden) {
+        this.lines = [
+          { who, text: `第${this.level.index}关 · ${lvName}` },
+          { who, text: "唔……先让我打个哈欠。呼啊——好，精神了（一半）。" },
+          { who, text: `那……为了金灿灿和甜品，${bossName}，就交给我了！` },
+        ];
+      } else if (isHaiyu) {
+        this.lines = [
+          { who, text: `第${this.level.index}关 · ${lvName}` },
+          { who, text: "人多的地方不适合我，有你在旁边就够了。" },
+          { who, text: "嗯？你说作弊？那可是我海之力契约的伙伴哎，也就是说是我的一部分，哼哼~" },
+        ];
+      } else {
+        this.lines = [
+          { who, text: `第${this.level.index}关 · ${lvName}` },
+          { who, text: "呼……我准备好了。" },
+          { who, text: `那……我的魔女试炼，${bossName}，现在开始！` },
+        ];
+      }
+    } else {
+      if (isGolden) {
+        this.lines = [
+          { who, text: "唔……那就慢慢开始吧，别催我。" },
+          { who, text: "为了金灿灿和甜品……power！！！" },
+        ];
+      } else if (isHaiyu) {
+        this.lines = [
+          { who, text: "安静点比较好。走吧。" },
+          { who, text: "嗯，出发。" },
+        ];
+      } else {
+        this.lines = [
+          { who, text: "深呼吸……我准备好了。" },
+          { who, text: "我的魔女试炼，现在开始！" },
+        ];
+      }
+    }
     this.idx = 0;
     this.charT = 0;       // 打字机计时
     this.done = false;    // 当前句是否显示完

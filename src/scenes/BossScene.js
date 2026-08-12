@@ -9,6 +9,7 @@ import { PALETTE } from "../engine/Game.js";
 import { Particles } from "../systems/Particles.js";
 import { Save } from "../systems/Save.js";
 import { getLevelBoss, getLevel, TOTAL_LEVELS } from "../data/levels.js";
+import { getSkin } from "../data/skins.js";
 import { Difficulty } from "../data/difficulty.js";
 import { ACHIEVEMENTS } from "../data/achievements.js";
 import { MenuScene } from "./MenuScene.js";
@@ -72,6 +73,20 @@ export class BossScene extends Scene {
         orbitR: 26 + i * 6,
         x: this.player.x, y: this.player.y,
         fireCd: 0.5 + i * 0.15, // 错开开火节奏
+        spin: 0,
+      });
+    }
+
+    // ===== 先天角色能力：海於专属契约鲸鱼，Boss 战中协同攻击 =====
+    const charSkin = getSkin("character", this.save.equipped.character);
+    if (charSkin && charSkin.pet) {
+      this.companions.push({
+        innate: true,
+        color: charSkin.pet.color,
+        ang: Math.PI, // 从与星星相反的方位起步，视觉上不重叠
+        orbitR: 30,
+        x: this.player.x, y: this.player.y,
+        fireCd: 0.4,
         spin: 0,
       });
     }
@@ -336,10 +351,10 @@ export class BossScene extends Scene {
         this.playerBullets.push({
           x: c.x, y: c.y,
           vx: w.bulletSpeed * 0.95, vy: 0,
-          r: 3, dmg: starDmg, color: "#5cff9a",
+          r: 3, dmg: starDmg, color: c.color || "#5cff9a",
           homing: false, dead: false, fromCompanion: true,
         });
-        this.particles.burst(c.x, c.y, "#5cff9a", 3, { speed: 50, life: 0.18, size: 2 });
+        this.particles.burst(c.x, c.y, c.color || "#5cff9a", 3, { speed: 50, life: 0.18, size: 2 });
       }
     }
   }
@@ -347,26 +362,52 @@ export class BossScene extends Scene {
   _renderCompanions(ctx) {
     if (!this.companions || !this.companions.length) return;
     for (const c of this.companions) {
-      ctx.save();
-      ctx.translate(Math.round(c.x), Math.round(c.y));
-      ctx.rotate(c.spin);
-      ctx.fillStyle = "#5cff9a";
-      ctx.shadowColor = "#5cff9a";
-      ctx.shadowBlur = 8;
-      // 简易五角星
-      const R =5, r = 2.2;
-      ctx.beginPath();
-      for (let i = 0; i < 10; i++) {
-        const rad = i % 2 === 0 ? R : r;
-        const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
-        const px = Math.cos(a) * rad, py = Math.sin(a) * rad;
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.restore();
+      if (c.innate) this._renderPetCompanion(ctx, c);
+      else this._renderStarCompanion(ctx, c);
     }
+  }
+
+  _renderStarCompanion(ctx, c) {
+    ctx.save();
+    ctx.translate(Math.round(c.x), Math.round(c.y));
+    ctx.rotate(c.spin);
+    ctx.fillStyle = "#5cff9a";
+    ctx.shadowColor = "#5cff9a";
+    ctx.shadowBlur = 8;
+    // 简易五角星
+    const R =5, r = 2.2;
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const rad = i % 2 === 0 ? R : r;
+      const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+      const px = Math.cos(a) * rad, py = Math.sin(a) * rad;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // 契约鲸鱼协同攻击造型（海於专属）：小鲸鱼跟随玩家一起对 Boss 开火
+  _renderPetCompanion(ctx, c) {
+    const col = c.color || "#4fc3ff";
+    ctx.save();
+    ctx.translate(Math.round(c.x), Math.round(c.y));
+    ctx.fillStyle = col;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 7, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-7, 0);
+    ctx.lineTo(-12, -4);
+    ctx.lineTo(-12, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
   }
 
   _updateBoss(dt) {

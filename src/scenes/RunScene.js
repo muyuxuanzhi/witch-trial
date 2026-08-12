@@ -39,6 +39,21 @@ export class RunScene extends Scene {
     this.spawner = new Spawner(getSkin("obstacle", this.save.equipped.obstacle));
     this.particles = new Particles();
 
+    // ===== 先天角色能力：海於专属契约鲸鱼 =====
+    // 仅当前装备的角色皮肤配置了 pet 时生效（目前只有海於的碧海魔女皮肤）。
+    // 鲸鱼跟随玩家显示；每隔 shieldInterval 秒攒一层不可叠加的护盾，
+    // 护盾在下一次撞上障碍时消耗，完全抵挡那一次碰撞伤害。
+    const charSkin = getSkin("character", this.save.equipped.character);
+    this.pet = charSkin && charSkin.pet ? charSkin.pet : null;
+    if (this.pet) {
+      this.petX = this.player.cx - 30;
+      this.petY = this.player.cy;
+      this.petBob = 0;
+      this.petShieldT = 0;
+      this.petShieldInterval = this.pet.shieldInterval || 30;
+      this.petShieldReady = false;
+    }
+
     this.speed = CONFIG.startSpeed;
     this.speedMul = this.level.speedMul || 1;
     this.elapsed = 0;
@@ -254,8 +269,28 @@ export class RunScene extends Scene {
 
     this._checkCollisions();
     this._updateSmashRings(dt);
+    this._updatePet(dt);
 
     this.shake *= 0.85;
+  }
+
+  // 契约鲸鱼：跟随玩家游动 + 护盾节奏计时（不可叠加，攒满一层就等待被消耗）
+  _updatePet(dt) {
+    if (!this.pet) return;
+    const targetX = this.player.cx - 30;
+    const targetY = this.player.cy;
+    this.petX += (targetX - this.petX) * Math.min(1, 6 * dt);
+    this.petBob += dt;
+    this.petY = targetY + Math.sin(this.petBob * 3) * 6;
+
+    this.petShieldT += dt;
+    if (this.petShieldT >= this.petShieldInterval) {
+      this.petShieldT = 0;
+      if (!this.petShieldReady) {
+        this.petShieldReady = true;
+        this.particles.burst(this.player.cx, this.player.cy, this.pet.color, 14, { speed: 90, life: 0.5, size: 2 });
+      }
+    }
   }
 
   _updateSmashRings(dt) {
@@ -398,6 +433,16 @@ export class RunScene extends Scene {
   _hitObstacle(e) {
     if (this.player.invuln > 0) return;
 
+    // ===== 海於专属：契约鲸鱼护盾——不可叠加，攒满就挡下这一次碰撞伤害 =====
+    if (this.petShieldReady) {
+      this.petShieldReady = false;
+      e.dead = true;
+      this.player.invuln = 0.3;
+      audio.play("rareStar");
+      this.particles.burst(this.player.cx, this.player.cy, this.pet.color, 22, { speed: 150, life: 0.5, size: 3 });
+      return;
+    }
+
     // ===== 地狱难度：生命制（撞满 maxLives 次即死）=====
     // 破障魔法在地狱下不再"直接碾压"，而是把耐撞上限翻倍(见 maxLives)
     if (this.diff.runLifeMode) {
@@ -498,6 +543,7 @@ export class RunScene extends Scene {
     this.bg.render(ctx, this.t);
     this.spawner.render(ctx, this.t);
     this.player.render(ctx);
+    this._renderPet(ctx);
     this._renderSmashRings(ctx);
     this.particles.render(ctx);
     ctx.restore();
@@ -508,6 +554,48 @@ export class RunScene extends Scene {
     if (this.state === "goal") this._renderGoal(ctx, W, H);
     if (this.state === "paused") this._renderPause(ctx, W, H);
     if (this.state === "dead" && this.hitStop <= 0) this._renderDead(ctx, W, H);
+  }
+
+  // 契约鲸鱼跟随伙伴 + 护盾环（攒满一层护盾时在玩家身周画一圈微光提示）
+  _renderPet(ctx) {
+    if (!this.pet) return;
+    const col = this.pet.color;
+    if (this.petShieldReady) {
+      ctx.save();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = col; ctx.shadowBlur = 8;
+      ctx.globalAlpha = 0.75 + Math.sin(this.t * 6) * 0.2;
+      ctx.beginPath();
+      ctx.arc(this.player.cx, this.player.cy, 14, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+      ctx.shadowBlur = 0;
+    }
+    ctx.save();
+    ctx.translate(Math.round(this.petX), Math.round(this.petY));
+    ctx.fillStyle = col;
+    ctx.shadowColor = col; ctx.shadowBlur = 5;
+    // 身体
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 9, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 尾巴
+    ctx.beginPath();
+    ctx.moveTo(-9, 0);
+    ctx.lineTo(-15, -5);
+    ctx.lineTo(-15, 5);
+    ctx.closePath();
+    ctx.fill();
+    // 喷水
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(3, -5);
+    ctx.lineTo(2, -9 - Math.sin(this.petBob * 4) * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
   }
 
   _renderSmashRings(ctx) {
@@ -617,6 +705,18 @@ export class RunScene extends Scene {
       ctx.fillText(`本轮 ${this.totalTrial - base}/${this.goalTrial - base}`, W - 34, 34);
     } else {
   ctx.fillText(`目标 ${this.totalTrial}/${this.goalTrial}`, W - 34, 34);
+    }
+
+    // 契约鲸鱼护盾状态（海於专属，独立于 Buff 图标行显示在其上方）
+    if (this.pet) {
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.font = "9px monospace";
+      ctx.fillStyle = this.pet.color;
+      const label = this.petShieldReady
+        ? "🐋 护盾已就位"
+        : `🐋 护盾 ${Math.max(0, this.petShieldInterval - this.petShieldT).toFixed(0)}s`;
+      ctx.fillText(label, 10, H - 30);
     }
 
     // Buff 图标列表（左下）

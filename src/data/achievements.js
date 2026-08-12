@@ -516,7 +516,7 @@ export const ACHIEVEMENTS = [
   {
     id: "sweet_eclipse",
     name: "终极甜蜜",
-    desc: "通关游戏并解锁黄金魔女皮肤，金橙的大魔女朋友会履行诺言——10 万箱金箔坚果巧克力！",
+    desc: "通关游戏并解锁黄金魔女皮肤，触发隐藏彩蛋——10 万箱金箔坚果巧克力。",
     hint: "???",
     hidden: true,
     iconKind: "sweetEclipse",
