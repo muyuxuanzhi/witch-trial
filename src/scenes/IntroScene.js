@@ -100,8 +100,26 @@ export class IntroScene extends Scene {
 
   _shownText() {
     const full = this._curFullText();
- const n = Math.floor(this.charT * 22);
-  return full.slice(0, n);
+    const n = Math.floor(this.charT * 22);
+ return full.slice(0, n);
+  }
+
+  // 按最大宽度把一整句台词按字符切成多行（中文不含空格，逐字符累加测量最稳）。
+  // 调用前需确保 ctx.font 已设置为正文字号，否则测量宽度不准。
+  _wrapLines(ctx, text, maxWidth) {
+    const lines = [];
+    let cur = "";
+    for (const ch of text) {
+      const test = cur + ch;
+      if (cur.length > 0 && ctx.measureText(test).width > maxWidth) {
+        lines.push(cur);
+        cur = ch;
+      } else {
+        cur = test;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines.length ? lines : [""];
   }
 
   _advance() {
@@ -185,8 +203,14 @@ export class IntroScene extends Scene {
     ctx.fillStyle = "rgba(20,10,31,0.68)";
     ctx.fillRect(0, 0, W, H);
 
-    // 对话框
-    const boxH = 70;
+    // 对话框：先按最终整句台词换行，算出需要几行，再决定框高——
+    // 避免固定单行高度时长台词（如海於的作弊梗那句）直接撑破/溢出对话框。
+    const textX = 28;
+    const lineH = 15;
+    ctx.font = "14px monospace"; // 换行测量要用正文字号，否则宽度不准
+    const maxTextWidth = W - textX - 24; // 右侧留出与左侧对称的边距
+    const fullLines = this._wrapLines(ctx, this._curFullText(), maxTextWidth);
+    const boxH = Math.max(70, 34 + fullLines.length * lineH + 16);
     const boxY = H - boxH - 16;
     ctx.fillStyle = "rgba(42,26,58,0.92)";
     ctx.fillRect(16, boxY, W - 32, boxH);
@@ -203,12 +227,18 @@ export class IntroScene extends Scene {
     ctx.textBaseline = "top";
     ctx.fillStyle = PALETTE.gold;
     ctx.font = "bold 12px monospace";
-    ctx.fillText(line.who, 28, boxY + 10);
+    ctx.fillText(line.who, textX, boxY + 10);
 
-    // 正文（打字机）
+    // 正文（打字机，按已换好的行逐行揭示字符，行数与框高在上面已经算好）
     ctx.fillStyle = PALETTE.text;
     ctx.font = "14px monospace";
-    ctx.fillText(this._shownText(), 28, boxY + 30);
+    let remaining = this._shownText().length;
+    for (let i = 0; i < fullLines.length; i++) {
+      const lineText = fullLines[i];
+      const shown = lineText.slice(0, Math.max(0, remaining));
+      remaining -= lineText.length;
+      if (shown) ctx.fillText(shown, textX, boxY + 30 + i * lineH);
+    }
 
     // 提示：进入加载态时显示"加载中"，否则显示闪烁的继续/开始箭头
     if (this._starting) {
