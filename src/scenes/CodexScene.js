@@ -80,15 +80,15 @@ export class CodexScene extends Scene {
     ctx.fillRect(bb.x, bb.y, bb.w, bb.h);
     ctx.strokeStyle = "rgba(185,107,255,0.5)"; ctx.lineWidth = 1;
     ctx.strokeRect(bb.x + 0.5, bb.y + 0.5, bb.w - 1, bb.h - 1);
-    ctx.fillStyle = PALETTE.text; ctx.font = "10px monospace";
+    ctx.fillStyle = PALETTE.text; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("‹ 返回", bb.x + 8, bb.y + bb.h / 2 + 1);
 
-    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 13px monospace";
+    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 13px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("图鉴 CODEX", bb.x + bb.w + 12, bb.y + bb.h / 2 + 1);
 
     // 分页标签
     const tr = this._tabRects();
-    ctx.font = "10px monospace"; ctx.textAlign = "center";
+    ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textAlign = "center";
     for (let i = 0; i < TABS.length; i++) {
       const r = tr[i], on = i === this.tab;
       ctx.fillStyle = on ? "rgba(255,207,92,0.22)" : "rgba(255,255,255,0.05)";
@@ -114,7 +114,7 @@ export class CodexScene extends Scene {
 
     // 底部提示
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px monospace";
+    ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("←→ 切换页 · ↑↓ 滚动 · Esc 返回", W / 2, H - 7);
     ctx.textAlign = "left";
   }
@@ -196,7 +196,7 @@ export class CodexScene extends Scene {
     if (img.complete && img.naturalWidth) ctx.drawImage(img, imgX, imgY, iw, ih);
     else {
       ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.fillRect(imgX, imgY, iw, ih);
-      ctx.fillStyle = "rgba(233,220,255,0.5)"; ctx.font = "8px monospace"; ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(233,220,255,0.5)"; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textAlign = "center";
       ctx.fillText("加载中", imgX + iw / 2, imgY + ih / 2);
     }
     ctx.restore();
@@ -204,21 +204,21 @@ export class CodexScene extends Scene {
     const tx = imgX + iw + 16;
     let ty = y0 + 4;
     ctx.textAlign = "left"; ctx.textBaseline = "top";
-    ctx.fillStyle = nameColor; ctx.font = "bold 12px monospace";
+    ctx.fillStyle = nameColor; ctx.font = "bold 12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     if (nameColor === "#ffcf5c") { ctx.shadowColor = "#ffcf5c"; ctx.shadowBlur = 4; }
     ctx.fillText(name, tx, ty);
     ctx.shadowBlur = 0;
     ty += 16;
 
     // 描述
-    ctx.font = "8px monospace"; ctx.fillStyle = nameColor === "#ffcf5c" ? "rgba(255,247,200,0.85)" : "rgba(233,220,255,0.85)";
+    ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.fillStyle = nameColor === "#ffcf5c" ? "rgba(255,247,200,0.85)" : "rgba(233,220,255,0.85)";
     for (const l of descLines) { ctx.fillText(l, tx, ty); ty += 11; }
     ty += 2;
 
     // 额外信息
     if (infoLines.length) {
       ctx.fillStyle = nameColor === "#ffcf5c" ? "#ffd94a" : PALETTE.neon;
-      ctx.font = "8px monospace";
+      ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       for (const l of infoLines) {
         if (l.startsWith("◆")) {
           // 进化形态条目用对应颜色
@@ -240,7 +240,7 @@ export class CodexScene extends Scene {
     let y = top + 8 - this.scroll;
     ctx.textAlign = "left"; ctx.textBaseline = "top";
     for (const c of SPRITE_CHARS) {
-      ctx.fillStyle = c.color; ctx.font = "bold 11px monospace";
+      ctx.fillStyle = c.color; ctx.font = "bold 11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       if (c.color === "#ffcf5c") { ctx.shadowColor = c.color; ctx.shadowBlur = 4; }
       ctx.fillText(c.label, pad, y);
       ctx.shadowBlur = 0;
@@ -256,17 +256,19 @@ export class CodexScene extends Scene {
         ctx.globalAlpha = 1;
 
         const sprite = getWitchSprite(c.skinId, f.id);
-        const availW = cellW - 6, availH = cellH - 16;
+        // availH 原为 cellH-16，立绘按高度封顶时底边会紧贴甚至压进下方名字文字，
+        // 多留出一些底部间距，避免立绘和角色名重叠。
+        const availW = cellW - 6, availH = cellH - 24;
         if (sprite) {
           let dw = availW, dh = (sprite.height / sprite.width) * dw;
           if (dh > availH) { dh = availH; dw = (sprite.width / sprite.height) * dh; }
           ctx.drawImage(sprite, x + (cellW - dw) / 2, y + 3 + (availH - dh) / 2, dw, dh);
         } else {
-          ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px monospace"; ctx.textAlign = "center";
+          ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textAlign = "center";
           ctx.fillText("加载中", x + cellW / 2, y + cellH / 2 - 5);
           ctx.textAlign = "left";
         }
-        ctx.fillStyle = "rgba(233,220,255,0.65)"; ctx.font = "7px monospace"; ctx.textAlign = "center";
+        ctx.fillStyle = "rgba(233,220,255,0.65)"; ctx.font = "7px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textAlign = "center";
         ctx.fillText(f.name, x + cellW / 2, y + cellH - 11);
         ctx.textAlign = "left";
       }
@@ -287,12 +289,12 @@ export class CodexScene extends Scene {
       ctx.strokeStyle = b.color; ctx.lineWidth = 1;
       ctx.strokeRect(16.5, y + 0.5, cardW - 1, cardH - 1);
       // 图标
-      ctx.fillStyle = b.color; ctx.font = "20px monospace"; ctx.textBaseline = "middle";
+      ctx.fillStyle = b.color; ctx.font = "20px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textBaseline = "middle";
       ctx.fillText(b.icon, 26, y + cardH / 2);
       // 名称+描述
-      ctx.fillStyle = b.color; ctx.font = "bold 11px monospace"; ctx.textBaseline = "top";
+      ctx.fillStyle = b.color; ctx.font = "bold 11px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textBaseline = "top";
       ctx.fillText(b.name, 52, y + 7);
-      ctx.fillStyle = "rgba(233,220,255,0.8)"; ctx.font = "8px monospace";
+      ctx.fillStyle = "rgba(233,220,255,0.8)"; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       let desc = b.desc;
       // 破障魔法：补充地狱难度特殊说明
       if (b.id === "smash") desc = b.desc + "（地狱难度：每层耐撞翻倍 3→6→12）";
@@ -317,13 +319,13 @@ export class CodexScene extends Scene {
       ctx.fillStyle = b.color;
       ctx.fillRect(16, y, 4, cardH);
       // 名称
-      ctx.fillStyle = b.color; ctx.font = "bold 11px monospace"; ctx.textBaseline = "top";
+      ctx.fillStyle = b.color; ctx.font = "bold 11px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textBaseline = "top";
       ctx.fillText(`第${i + 1}关 · ${b.name}`, 30, y + 6);
       // 描述
-      ctx.fillStyle = "rgba(233,220,255,0.8)"; ctx.font = "8px monospace";
+      ctx.fillStyle = "rgba(233,220,255,0.8)"; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText(b.desc, 30, y + 20);
       // 数值
-      ctx.fillStyle = "rgba(255,207,92,0.85)"; ctx.font = "8px monospace";
+      ctx.fillStyle = "rgba(255,207,92,0.85)"; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText(`HP ${b.hp} · 弹幕 ${b.patterns.length} 种 · 地狱 HP×3`, 30, y + 32);
       y += cardH + gap;
     }

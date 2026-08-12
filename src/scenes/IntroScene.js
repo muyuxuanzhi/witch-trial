@@ -207,7 +207,7 @@ export class IntroScene extends Scene {
     // 避免固定单行高度时长台词（如海於的作弊梗那句）直接撑破/溢出对话框。
     const textX = 28;
     const lineH = 15;
-    ctx.font = "14px monospace"; // 换行测量要用正文字号，否则宽度不准
+    ctx.font = "14px 'Microsoft YaHei', 'PingFang SC', sans-serif"; // 换行测量要用正文字号，否则宽度不准
     const maxTextWidth = W - textX - 24; // 右侧留出与左侧对称的边距
     const fullLines = this._wrapLines(ctx, this._curFullText(), maxTextWidth);
     const boxH = Math.max(70, 34 + fullLines.length * lineH + 16);
@@ -226,12 +226,12 @@ export class IntroScene extends Scene {
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillStyle = PALETTE.gold;
-    ctx.font = "bold 12px monospace";
+    ctx.font = "bold 12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(line.who, textX, boxY + 10);
 
     // 正文（打字机，按已换好的行逐行揭示字符，行数与框高在上面已经算好）
     ctx.fillStyle = PALETTE.text;
-    ctx.font = "14px monospace";
+    ctx.font = "14px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     let remaining = this._shownText().length;
     for (let i = 0; i < fullLines.length; i++) {
       const lineText = fullLines[i];
@@ -244,14 +244,14 @@ export class IntroScene extends Scene {
     if (this._starting) {
       // 已点击开始试炼，正在加载 RunScene：给出明确反馈，避免被误认为"卡死点不动"
       ctx.fillStyle = PALETTE.gold;
-      ctx.font = "12px monospace";
+      ctx.font = "12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.textAlign = "right";
       const dots = ".".repeat(1 + (Math.floor(this.t * 2) % 3));
       ctx.fillText("✦ 加载中" + dots, W - 28, boxY + boxH - 18);
     } else if (this._shownText().length >= this._curFullText().length) {
       if (Math.floor(this.t * 2) % 2 === 0) {
         ctx.fillStyle = PALETTE.cyan;
-        ctx.font = "12px monospace";
+        ctx.font = "12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
         ctx.textAlign = "right";
         const tip = this.idx < this.lines.length - 1 ? "▼ 点击继续" : "▼ 点击开始试炼";
       ctx.fillText(tip, W - 28, boxY + boxH - 18);
@@ -264,7 +264,7 @@ export class IntroScene extends Scene {
       // 当前缩放比 < 0.55（典型竖屏场景）：顶部一条横屏提示
       ctx.textAlign = "center";
       ctx.fillStyle = "rgba(255,207,92,0.85)";
-      ctx.font = "10px monospace";
+      ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText("📱 建议横屏体验更佳（请转动手机）", W / 2, 12);
       ctx.textAlign = "left";
     }

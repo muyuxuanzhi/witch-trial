@@ -527,7 +527,7 @@ export class RunScene extends Scene {
     ctx.lineWidth = 1;
     ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
     ctx.fillStyle = color;
-    ctx.font = "11px monospace";
+    ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(label, r.x + r.w / 2, r.y + r.h / 2 + 1);
@@ -653,7 +653,7 @@ export class RunScene extends Scene {
       const mx = barX + barW * ((v - base) / span);
       const reached = this.totalTrial >= v;
       // 特殊符号：✦ 已达成金色发光，未达成暗色
-      ctx.font = "10px monospace";
+      ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       if (reached) {
         ctx.fillStyle = PALETTE.gold;
         ctx.shadowColor = PALETTE.gold; ctx.shadowBlur = 6;
@@ -665,7 +665,7 @@ export class RunScene extends Scene {
       ctx.shadowBlur = 0;
     }
     // 终点标记（关卡目标 = Boss）用六芒星
-    ctx.font = "11px monospace";
+    ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillStyle = goalProg >= 1 ? PALETTE.danger : "rgba(255,92,138,0.85)";
     ctx.shadowColor = PALETTE.danger; ctx.shadowBlur = goalProg >= 1 ? 8 : 0;
     ctx.fillText("✶", barX + barW - 2, cyMark);
@@ -673,7 +673,7 @@ export class RunScene extends Scene {
     ctx.textAlign = "left";
 
  ctx.fillStyle = PALETTE.text;
-    ctx.font = "10px monospace";
+    ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textBaseline = "top";
     ctx.textAlign = "left";
     if (this.endless) {
@@ -688,7 +688,7 @@ export class RunScene extends Scene {
     if (this.diff.runLifeMode) {
       const lives = this.lives, max = this.maxLives;
       let hx = 10, hy = 48;
-      ctx.font = "11px monospace";
+      ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.textBaseline = "top";
       ctx.fillStyle = this.diff.color;
       ctx.fillText("🔥", hx, hy);
@@ -711,12 +711,14 @@ export class RunScene extends Scene {
     if (this.pet) {
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
-      ctx.font = "9px monospace";
+      ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillStyle = this.pet.color;
       const label = this.petShieldReady
         ? "🐋 护盾已就位"
         : `🐋 护盾 ${Math.max(0, this.petShieldInterval - this.petShieldT).toFixed(0)}s`;
-      ctx.fillText(label, 10, H - 30);
+      // 原来固定在 H-30，和下方 Buff 图标行（H-18，图标框顶边在 H-26）几乎贴死，
+      // 中文字号稍高时会视觉重叠，上移到 H-34 留出安全间距。
+      ctx.fillText(label, 10, H - 34);
     }
 
     // Buff 图标列表（左下）
@@ -744,7 +746,7 @@ export class RunScene extends Scene {
     let y = H - 18;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.font = "10px monospace";
+    ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
       const meta = this._buffMeta(id);
@@ -774,13 +776,13 @@ export class RunScene extends Scene {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = PALETTE.gold;
-    ctx.font = "bold 18px monospace";
+    ctx.font = "bold 18px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.shadowColor = PALETTE.gold;
     ctx.shadowBlur = 8;
     ctx.fillText("★ 试炼奖励 · 三选一 ★", W / 2, H * 0.2);
     ctx.shadowBlur = 0;
     ctx.fillStyle = "rgba(233,220,255,0.7)";
-    ctx.font = "10px monospace";
+    ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("点击卡片 / 按 1 2 3 选择（可叠加）", W / 2, H * 0.2 + 22);
 
     const rects = this._choiceRects();
@@ -803,26 +805,26 @@ export class RunScene extends Scene {
       ctx.shadowBlur = 0;
 
       ctx.fillStyle = b.color;
-      ctx.font = "bold 12px monospace";
+      ctx.font = "bold 12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.textAlign = "left";
       ctx.fillText(`${i + 1}`, r.x + 8, r.y + oy + 14);
 
       ctx.textAlign = "center";
-      ctx.font = "30px monospace";
+      ctx.font = "30px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText(b.icon, r.x + r.w / 2, r.y + oy + 44);
 
       ctx.fillStyle = PALETTE.text;
-      ctx.font = "bold 13px monospace";
+      ctx.font = "bold 13px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText(b.name, r.x + r.w / 2, r.y + oy + 78);
 
       if (owned > 0) {
         ctx.fillStyle = PALETTE.gold;
-        ctx.font = "9px monospace";
+        ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
         ctx.fillText(`已拥有 ${owned} 层 → ${owned + 1}`, r.x + r.w / 2, r.y + oy + 96);
       }
 
       ctx.fillStyle = "rgba(233,220,255,0.8)";
-      ctx.font = "9px monospace";
+      ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       this._wrapText(ctx, b.desc, r.x + r.w / 2, r.y + oy + 116, r.w - 16, 12);
 
       ctx.globalAlpha = 1;
@@ -836,17 +838,17 @@ export class RunScene extends Scene {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = PALETTE.gold;
-    ctx.font = "bold 20px monospace";
+    ctx.font = "bold 20px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.shadowColor = PALETTE.gold;
     ctx.shadowBlur = 10;
     ctx.fillText("试炼值已满！", W / 2, H * 0.4);
     ctx.shadowBlur = 0;
     ctx.fillStyle = PALETTE.text;
-    ctx.font = "12px monospace";
+    ctx.font = "12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("准备迎战 Boss —— 选择你的武器", W / 2, H * 0.52);
     if (Math.floor(this.t * 2) % 2 === 0) {
       ctx.fillStyle = PALETTE.cyan;
-      ctx.font = "10px monospace";
+      ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText("▼ 点击继续", W / 2, H * 0.62);
     }
     ctx.textAlign = "left";
@@ -858,7 +860,7 @@ export class RunScene extends Scene {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = PALETTE.neon;
-    ctx.font = "bold 22px monospace";
+    ctx.font = "bold 22px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.shadowColor = PALETTE.neon;
     ctx.shadowBlur = 8;
     ctx.fillText("暂停", W / 2, H * 0.32);
@@ -869,7 +871,7 @@ export class RunScene extends Scene {
     this._button(ctx, b.exit, "退出到主菜单", PALETTE.danger);
 
     ctx.fillStyle = "rgba(233,220,255,0.45)";
-    ctx.font = "9px monospace";
+    ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("P / Esc 继续", W / 2, H * 0.7);
     ctx.textAlign = "left";
   }
@@ -897,14 +899,14 @@ export class RunScene extends Scene {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = PALETTE.danger;
-    ctx.font = "bold 24px monospace";
+    ctx.font = "bold 24px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("试炼失败", W / 2, H * 0.24);
     ctx.fillStyle = PALETTE.text;
-    ctx.font = "12px monospace";
+    ctx.font = "12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(`最终形态  ${this.player.form.name}`, W / 2, H * 0.37);
     ctx.fillText(`本次分数  ${this.score}`, W / 2, H * 0.45);
     ctx.fillStyle = PALETTE.gold;
-    ctx.font = "11px monospace";
+    ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(`收集 ${this.collected}   金币 +${this.earned}   （共 ${this.save.coins}）`, W / 2, H * 0.53);
     ctx.fillStyle = "rgba(233,220,255,0.7)";
     ctx.fillText(`历史最高  ${this.hi}`, W / 2, H * 0.61);

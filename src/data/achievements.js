@@ -229,7 +229,7 @@ function drawFlame(x, y, color) {
 }
 function drawNumber(x, y, n, color, size) {
   ctx.fillStyle = color;
-  ctx.font = `bold ${size || 9}px monospace`;
+  ctx.font = `bold ${size || 9}px 'Microsoft YaHei', 'PingFang SC', sans-serif`;
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillText(n, x, y + 1);
 }
@@ -292,7 +292,7 @@ function drawCoin(x, y, color) {
   ctx.strokeStyle = "#7a5a10"; ctx.lineWidth = 0.5;
   ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   ctx.fillStyle = "#7a5a10";
-  ctx.font = "bold 6px monospace";
+  ctx.font = "bold 6px 'Microsoft YaHei', 'PingFang SC', sans-serif";
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillText("$", x, y + 0.5);
 }

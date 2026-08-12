@@ -99,11 +99,11 @@ export class WeaponSelectScene extends Scene {
     const boss = getLevelBoss(this.level);
 
     ctx.textAlign = "center"; ctx.textBaseline = "top";
-    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 18px monospace";
+    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 18px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.shadowColor = PALETTE.gold; ctx.shadowBlur = 8;
     ctx.fillText("选择你的武器", W / 2, 24);
     ctx.shadowBlur = 0;
-    ctx.fillStyle = PALETTE.text; ctx.font = "11px monospace";
+    ctx.fillStyle = PALETTE.text; ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(`即将挑战 · ${boss.name}`, W / 2, 50);
 
     const rects = this._cardRects();
@@ -122,17 +122,17 @@ export class WeaponSelectScene extends Scene {
       ctx.shadowBlur = 0;
 
       ctx.textAlign = "center"; ctx.textBaseline = "top";
-      ctx.fillStyle = w.color; ctx.font = "28px monospace";
+      ctx.fillStyle = w.color; ctx.font = "28px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText(w.icon, r.x + r.w / 2, r.y + 8);
-      ctx.fillStyle = PALETTE.text; ctx.font = "bold 11px monospace";
+      ctx.fillStyle = PALETTE.text; ctx.font = "bold 11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText(w.name, r.x + r.w / 2, r.y + 44);
 
-      ctx.fillStyle = "rgba(233,220,255,0.7)"; ctx.font = "8px monospace";
+      ctx.fillStyle = "rgba(233,220,255,0.7)"; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       this._wrap(ctx, w.desc, r.x + r.w / 2, r.y + 62, r.w - 12, 10);
 
       if (!owned) {
         ctx.fillStyle = "rgba(10,5,18,0.6)"; ctx.fillRect(r.x, r.y, r.w, r.h);
-        ctx.fillStyle = "rgba(220,210,240,0.85)"; ctx.font = "10px monospace";
+        ctx.fillStyle = "rgba(220,210,240,0.85)"; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
         ctx.fillText("🔒 商店解锁", r.x + r.w / 2, r.y + r.h / 2 - 4);
       }
     }
@@ -145,10 +145,10 @@ export class WeaponSelectScene extends Scene {
     ctx.strokeStyle = owned ? PALETTE.gold : "rgba(120,110,140,0.5)"; ctx.lineWidth = 1;
     ctx.strokeRect(sb.x + 0.5, sb.y + 0.5, sb.w - 1, sb.h - 1);
     ctx.fillStyle = owned ? PALETTE.gold : "rgba(180,170,200,0.6)";
-    ctx.font = "12px monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "12px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(owned ? "⚔ 进入弹幕战" : "该武器需在商店购买", sb.x + sb.w / 2, sb.y + sb.h / 2 + 1);
 
-    ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px monospace"; ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textBaseline = "top";
     ctx.fillText("← → / 点击选择 · Enter 确认", W / 2, H - 14);
     ctx.textAlign = "left";
   }

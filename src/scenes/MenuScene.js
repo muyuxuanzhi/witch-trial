@@ -89,21 +89,21 @@ export class MenuScene extends Scene {
     ctx.shadowColor = PALETTE.neon;
     ctx.shadowBlur = glow;
     ctx.fillStyle = PALETTE.text;
-    ctx.font = "bold 32px monospace";
+    ctx.font = "bold 32px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("魔女试炼", W / 2, H * 0.26);
     ctx.shadowBlur = 0;
     ctx.fillStyle = PALETTE.neon;
- ctx.font = "11px monospace";
+ ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("W I T C H   T R I A L", W / 2, H * 0.26 + 26);
     ctx.fillStyle = "rgba(233,220,255,0.55)";
-    ctx.font = "9px monospace";
+    ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     // 副标题跟随当前装备的角色皮肤，而不是固定写死叶林
     const charSkin = getSkin("character", this.save.equipped.character);
     const subtitle = charSkin ? `${charSkin.charName} · ${charSkin.name}` : "叶林 · 森林魔女";
     ctx.fillText(subtitle, W / 2, H * 0.26 + 42);
 
     const rects = this._itemRects();
-    ctx.font = "13px monospace";
+    ctx.font = "13px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     const curDiff = getDifficulty(this.diffId);
     for (let i = 0; i < this.items.length; i++) {
       const r = rects[i];
@@ -123,13 +123,13 @@ export class MenuScene extends Scene {
     }
     // 地狱难度说明
     if (this.diffId === "hell") {
-      ctx.font = "8px monospace";
+      ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillStyle = "rgba(255,120,120,0.75)";
       ctx.fillText("🔥 三命定生死 · Boss 血量×3 · 破障魔法改为耐撞翻倍", W / 2, rects[4].y + rects[4].h + 10);
     }
 
     ctx.textAlign = "right";
-    ctx.font = "10px monospace";
+    ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillStyle = PALETTE.gold;
     ctx.textBaseline = "top";
     ctx.fillText(`金币 ${this.save.coins}`, W - 10, 8);
@@ -139,7 +139,7 @@ export class MenuScene extends Scene {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "rgba(233,220,255,0.45)";
-    ctx.font = "8px monospace";
+    ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("↑↓选择 · ←→ 切换难度 · Enter 确认", W / 2, H * 0.92);
     ctx.textAlign = "left";
   }

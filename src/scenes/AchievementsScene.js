@@ -68,21 +68,21 @@ export class AchievementsScene extends Scene {
     ctx.fillStyle = "rgba(185,107,255,0.18)"; ctx.fillRect(bb.x, bb.y, bb.w, bb.h);
     ctx.strokeStyle = "rgba(185,107,255,0.5)"; ctx.lineWidth = 1;
     ctx.strokeRect(bb.x + 0.5, bb.y + 0.5, bb.w - 1, bb.h - 1);
-    ctx.fillStyle = PALETTE.text; ctx.font = "10px monospace";
+    ctx.fillStyle = PALETTE.text; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "left"; ctx.textBaseline = "middle";
     ctx.fillText("‹ 返回", bb.x + 8, bb.y + bb.h / 2 + 1);
 
-    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 13px monospace";
+    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 13px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("成就 ACHIEVEMENTS", bb.x + bb.w + 12, bb.y + bb.h / 2 + 1);
 
     const total = ACHIEVEMENT_TOTAL;
     const unlocked = countUnlocked(this.save);
-    ctx.fillStyle = "rgba(233,220,255,0.7)"; ctx.font = "10px monospace";
+    ctx.fillStyle = "rgba(233,220,255,0.7)"; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(`解锁 ${unlocked} / ${total}`, W - 12, 32);
 
     const tr = this._tabRects();
-    ctx.font = "10px monospace"; ctx.textAlign = "center";
+    ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textAlign = "center";
     for (let i = 0; i < TABS.length; i++) {
       const r = tr[i], on = i === this.tab;
       ctx.fillStyle = on ? "rgba(255,207,92,0.22)" : "rgba(255,255,255,0.05)";
@@ -122,7 +122,7 @@ export class AchievementsScene extends Scene {
     }
 
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px monospace";
+    ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("←→ 翻页 · ↑↓/滑动 滚动 · Esc 返回", W / 2, H - 7);
     ctx.textAlign = "left";
 
@@ -151,7 +151,7 @@ export class AchievementsScene extends Scene {
       ctx.lineTo(iconCx - 11, iconCy);
       ctx.closePath(); ctx.fill();
       ctx.strokeStyle = "rgba(180,160,200,0.7)"; ctx.lineWidth = 1; ctx.stroke();
-      ctx.fillStyle = "rgba(220,210,240,0.7)"; ctx.font = "bold 11px monospace";
+      ctx.fillStyle = "rgba(220,210,240,0.7)"; ctx.font = "bold 11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText("?", iconCx, iconCy + 1);
     } else {
@@ -165,15 +165,15 @@ export class AchievementsScene extends Scene {
     ctx.textAlign = "left"; ctx.textBaseline = "top";
     const tx = 16 + 50;
     ctx.fillStyle = unlocked ? PALETTE.gold : "rgba(220,210,240,0.7)";
-    ctx.font = "bold 12px monospace";
+    ctx.font = "bold 12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(showSecret ? "???" : a.name, tx, y + 8);
 
     ctx.fillStyle = unlocked ? "rgba(233,220,255,0.85)" : "rgba(180,170,200,0.55)";
-    ctx.font = "9px monospace";
+    ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     this._wrapText(ctx, showSecret ? a.hint : a.desc, tx, y + 25, W - tx - 30, 11);
 
     ctx.fillStyle = unlocked ? PALETTE.gold : "rgba(220,210,240,0.45)";
-    ctx.font = "10px monospace";
+    ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "right"; ctx.textBaseline = "middle";
     ctx.fillText(unlocked ? "★ 已解锁" : (showSecret ? "???" : "未解锁"), W - 24, y + cardH / 2);
     ctx.textAlign = "left";
@@ -200,10 +200,10 @@ export class AchievementsScene extends Scene {
     ctx.fillRect(16, ty, tw, th);
     ctx.strokeStyle = PALETTE.gold; ctx.lineWidth = 1;
     ctx.strokeRect(16.5, ty + 0.5, tw - 1, th - 1);
-    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 10px monospace";
+    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "left"; ctx.textBaseline = "top";
     ctx.fillText("✦ 成就解锁", 22, ty + 5);
-    ctx.fillStyle = PALETTE.text; ctx.font = "11px monospace";
+    ctx.fillStyle = PALETTE.text; ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(a.name, 22, ty + 19);
     ACHIEVEMENT_ICONS[a.iconKind](tw + 16 - 18, ty + th / 2, a.iconColor, a.iconAccent);
   }

@@ -90,18 +90,18 @@ export class ShopScene extends Scene {
     ctx.fillRect(back.x, back.y, back.w, back.h);
     ctx.strokeStyle = PALETTE.neon; ctx.lineWidth = 1;
     ctx.strokeRect(back.x + 0.5, back.y + 0.5, back.w - 1, back.h - 1);
-    ctx.fillStyle = PALETTE.neon; ctx.font = "10px monospace";
+    ctx.fillStyle = PALETTE.neon; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText("‹ 返回", back.x + back.w / 2, back.y + back.h / 2 + 1);
 
     // 金币
     ctx.textAlign = "right"; ctx.textBaseline = "top";
-    ctx.fillStyle = PALETTE.gold; ctx.font = "11px monospace";
+    ctx.fillStyle = PALETTE.gold; ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(`金币 ${this.save.coins}`, W - 12, 8);
 
     // 分类标签
     const catR = this._catRects();
-    ctx.textBaseline = "middle"; ctx.font = "10px monospace";
+    ctx.textBaseline = "middle"; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     for (let i = 0; i < CATEGORIES.length; i++) {
       const r = catR[i];
       const on = i === this.cat;
@@ -113,7 +113,7 @@ export class ShopScene extends Scene {
 
     // 皮肤列表
     const rowR = this._rowRects();
-    ctx.font = "10px monospace";
+    ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     for (let i = 0; i < this.skins.length; i++) {
       const s = this.skins[i];
       const r = rowR[i];
@@ -140,10 +140,10 @@ export class ShopScene extends Scene {
     // toast + 提示
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     if (this.toastT > 0) {
-      ctx.fillStyle = PALETTE.gold; ctx.font = "10px monospace";
+      ctx.fillStyle = PALETTE.gold; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText(this.toast, W / 2, H - 24);
     }
-    ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px monospace";
+    ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("点击标签切分类 · 点皮肤选择 · 点按钮购买/装备 · 返回", W / 2, H - 11);
     ctx.textAlign = "left";
   }
@@ -161,7 +161,7 @@ export class ShopScene extends Scene {
     const key = this.category.key;
 
     ctx.textAlign = "center"; ctx.textBaseline = "top";
-    ctx.fillStyle = PALETTE.text; ctx.font = "10px monospace";
+    ctx.fillStyle = PALETTE.text; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(s.name, cx, b.y + 8);
 
     if (key === "character") {
@@ -213,7 +213,7 @@ export class ShopScene extends Scene {
     ctx.fillRect(btn.x, btn.y, btn.w, btn.h);
     ctx.strokeStyle = col; ctx.lineWidth = 1;
     ctx.strokeRect(btn.x + 0.5, btn.y + 0.5, btn.w - 1, btn.h - 1);
-    ctx.fillStyle = col; ctx.font = "10px monospace";
+    ctx.fillStyle = col; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(label, btn.x + btn.w / 2, btn.y + btn.h / 2 + 1);
     ctx.textAlign = "left";

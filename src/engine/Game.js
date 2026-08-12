@@ -100,7 +100,7 @@ export class Game {
         this.ctx.fillStyle = `rgba(20,10,31,${a * 0.85})`;
         this.ctx.fillRect(0, 0, this.width, this.height);
         this.ctx.fillStyle = `rgba(255,207,92,${a * 0.6})`;
-        this.ctx.font = "10px monospace";
+        this.ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
         this.ctx.textAlign = "center"; this.ctx.textBaseline = "middle";
         this.ctx.fillText("✦ 加载中…", this.width / 2, this.height / 2);
         this.ctx.restore();

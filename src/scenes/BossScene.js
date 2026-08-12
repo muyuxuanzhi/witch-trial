@@ -936,7 +936,7 @@ if (this.endless) {
     ctx.fillRect(bx, by, bw * Math.max(0, this.bhp / this.bMaxHp), bh);
     ctx.strokeStyle = this.boss.capColor; ctx.lineWidth = 1;
     ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, bh - 1);
-    ctx.fillStyle = PALETTE.text; ctx.font = "9px monospace";
+    ctx.fillStyle = PALETTE.text; ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "top";
     ctx.fillText(`${this.boss.name}  ${Math.max(0, Math.ceil(this.bhp))}/${this.bMaxHp}`, W / 2, by + bh + 2);
 
@@ -945,7 +945,7 @@ if (this.endless) {
     const pbx = 10, pby = H - 16, pbw = 160, pbh = 9;
     if (this.diff.bossLifeMode) {
       ctx.textAlign = "left"; ctx.textBaseline = "middle";
-      ctx.font = "13px monospace";
+      ctx.font = "13px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillStyle = this.diff.color;
       ctx.fillText("🔥", pbx, pby + pbh / 2);
       let hx = pbx + 18;
@@ -955,7 +955,7 @@ if (this.endless) {
       }
       // 无敌状态提示
       if (this.player.invuln > 0) {
-        ctx.fillStyle = "#ffd94a"; ctx.font = "9px monospace";
+        ctx.fillStyle = "#ffd94a"; ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
         ctx.fillText(`无敌 ${this.player.invuln.toFixed(1)}s`, hx + this.player.maxHp * 14 + 6, pby + pbh / 2 + 1);
       }
     } else {
@@ -968,26 +968,26 @@ if (this.endless) {
       ctx.fillRect(pbx, pby, pbw * pratio, pbh);
       ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 1;
       ctx.strokeRect(pbx + 0.5, pby + 0.5, pbw - 1, pbh - 1);
-      ctx.fillStyle = PALETTE.text; ctx.font = "8px monospace";
+      ctx.fillStyle = PALETTE.text; ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.textAlign = "left"; ctx.textBaseline = "middle";
       ctx.fillText(`HP ${php}/${this.player.maxHp}`, pbx + pbw + 6, pby + pbh / 2 + 1);
     }
 
     // 武器名
-    ctx.fillStyle = this.weapon.color; ctx.font = "9px monospace";
+    ctx.fillStyle = this.weapon.color; ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "right"; ctx.textBaseline = "bottom";
     ctx.fillText(`${this.weapon.icon} ${this.weapon.name}`, W - 10, H - 8);
 
     // 六芒星收集数 + 狂暴状态（顶部靠右，避免与底部血量/爱心重叠）
     ctx.textAlign = "right"; ctx.textBaseline = "top";
-    ctx.font = "10px monospace";
+    ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillStyle = "#ffd94a";
     ctx.shadowColor = "#ffd94a"; ctx.shadowBlur = this.powerT > 0 ? 6 : 0;
     ctx.fillText(`✶六芒星 x${this.starCollected}`, W - 30, by + bh + 2);
     ctx.shadowBlur = 0;
     if (this.powerT > 0) {
       ctx.fillStyle = "#ffd94a";
-      ctx.font = "9px monospace";
+      ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText(`星辉狂暴 ${this.powerT.toFixed(1)}s`, W - 30, by + bh + 15);
     }
 
@@ -1005,7 +1005,7 @@ if (this.endless) {
   _renderPause(ctx, W, H) {
     ctx.fillStyle = "rgba(20,10,31,0.82)"; ctx.fillRect(0, 0, W, H);
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillStyle = PALETTE.neon; ctx.font = "bold 22px monospace";
+    ctx.fillStyle = PALETTE.neon; ctx.font = "bold 22px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("暂停", W / 2, H * 0.32);
     const b = this._pauseMenuButtons();
     this._btn(ctx, b.resume, "继续战斗", PALETTE.cyan);
@@ -1016,7 +1016,7 @@ if (this.endless) {
   _renderWin(ctx, W, H) {
     ctx.fillStyle = "rgba(20,10,31,0.78)"; ctx.fillRect(0, 0, W, H);
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 24px monospace";
+    ctx.fillStyle = PALETTE.gold; ctx.font = "bold 24px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.shadowColor = PALETTE.gold; ctx.shadowBlur = 10;
     const allClear = !this.endless && this.level.index >= TOTAL_LEVELS;
     if (this.endless) {
@@ -1025,7 +1025,7 @@ if (this.endless) {
  ctx.fillText(allClear ? "全部试炼达成！" : "击败 " + this.boss.name, W / 2, H * 0.3);
     }
     ctx.shadowBlur = 0;
-    ctx.fillStyle = PALETTE.text; ctx.font = "12px monospace";
+    ctx.fillStyle = PALETTE.text; ctx.font = "12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(`金币 +${this.reward}   （共 ${this.save.coins}）`, W / 2, H * 0.44);
     ctx.fillStyle = "#ffd94a";
     ctx.fillText(`✶ 六芒星收集 x${this.starCollected}`, W / 2, H * 0.5);
@@ -1044,9 +1044,9 @@ if (this.endless) {
   _renderLose(ctx, W, H) {
     ctx.fillStyle = "rgba(20,10,31,0.78)"; ctx.fillRect(0, 0, W, H);
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillStyle = PALETTE.danger; ctx.font = "bold 24px monospace";
+    ctx.fillStyle = PALETTE.danger; ctx.font = "bold 24px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText("试炼失败", W / 2, H * 0.32);
-    ctx.fillStyle = PALETTE.text; ctx.font = "12px monospace";
+    ctx.fillStyle = PALETTE.text; ctx.font = "12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(`${this.boss.name} 太强大了……`, W / 2, H * 0.46);
     if (this.endT > 0.5) {
       const b = this._endButtons();
@@ -1061,7 +1061,7 @@ if (this.endless) {
     ctx.fillRect(r.x, r.y, r.w, r.h);
     ctx.strokeStyle = color; ctx.lineWidth = 1;
     ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
-    ctx.fillStyle = color; ctx.font = "11px monospace";
+    ctx.fillStyle = color; ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(label, r.x + r.w / 2, r.y + r.h / 2 + 1);
   }

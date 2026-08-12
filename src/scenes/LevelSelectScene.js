@@ -103,18 +103,18 @@ export class LevelSelectScene extends Scene {
     ctx.fillStyle = "rgba(185,107,255,0.14)"; ctx.fillRect(back.x, back.y, back.w, back.h);
     ctx.strokeStyle = PALETTE.neon; ctx.lineWidth = 1;
     ctx.strokeRect(back.x + 0.5, back.y + 0.5, back.w - 1, back.h - 1);
-    ctx.fillStyle = PALETTE.neon; ctx.font = "10px monospace";
+    ctx.fillStyle = PALETTE.neon; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText("‹ 返回", back.x + back.w / 2, back.y + back.h / 2 + 1);
 
     // 标题
     ctx.textAlign = "center"; ctx.textBaseline = "top";
-    ctx.fillStyle = PALETTE.text; ctx.font = "bold 18px monospace";
+    ctx.fillStyle = PALETTE.text; ctx.font = "bold 18px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.shadowColor = PALETTE.neon; ctx.shadowBlur = 8;
     ctx.fillText("选择试炼", W / 2, 26);
     ctx.shadowBlur = 0;
 
-    ctx.fillStyle = PALETTE.gold; ctx.font = "10px monospace";
+    ctx.fillStyle = PALETTE.gold; ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(`金币 ${this.save.coins}`, W - 12, 10);
 
@@ -143,12 +143,12 @@ export class LevelSelectScene extends Scene {
       // 关卡序号
       ctx.textAlign = "center"; ctx.textBaseline = "top";
       ctx.fillStyle = unlocked ? lv.accentA : "rgba(180,170,200,0.6)";
-      ctx.font = "bold 20px monospace";
+      ctx.font = "bold 20px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText(`${lv.index}`, r.x + r.w / 2, r.y + 8);
 
       // 名称
       ctx.fillStyle = unlocked ? PALETTE.text : "rgba(180,170,200,0.6)";
-      ctx.font = "bold 11px monospace";
+      ctx.font = "bold 11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
       ctx.fillText(lv.name, r.x + r.w / 2, r.y + 34);
 
       // Boss 小图标区
@@ -160,18 +160,18 @@ export class LevelSelectScene extends Scene {
         ctx.fillStyle = "rgba(10,5,18,0.55)";
         ctx.fillRect(r.x, r.y, r.w, r.h);
         ctx.fillStyle = "rgba(220,210,240,0.85)";
-        ctx.font = "22px monospace";
+        ctx.font = "22px 'Microsoft YaHei', 'PingFang SC', sans-serif";
         ctx.fillText("🔒", r.x + r.w / 2, r.y + r.h / 2 - 12);
-        ctx.font = "9px monospace";
+        ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
         ctx.fillStyle = "rgba(220,210,240,0.7)";
         ctx.fillText("未解锁", r.x + r.w / 2, r.y + r.h / 2 + 14);
       } else if (cleared) {
         ctx.fillStyle = PALETTE.gold;
-        ctx.font = "10px monospace";
+        ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
         ctx.fillText("★ 已通关", r.x + r.w / 2, r.y + r.h - 18);
       } else {
         ctx.fillStyle = lv.accentB;
-        ctx.font = "9px monospace";
+        ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
         ctx.fillText("挑战", r.x + r.w / 2, r.y + r.h - 18);
       }
     }
@@ -180,9 +180,9 @@ export class LevelSelectScene extends Scene {
     const lv = LEVELS[this.sel];
     const boss = getBossById(lv.bossId);
     ctx.textAlign = "center"; ctx.textBaseline = "top";
-    ctx.fillStyle = PALETTE.text; ctx.font = "11px monospace";
+    ctx.fillStyle = PALETTE.text; ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(`${lv.subtitle} · Boss：${boss.name}`, W / 2, 208);
-    ctx.fillStyle = "rgba(233,220,255,0.65)"; ctx.font = "9px monospace";
+    ctx.fillStyle = "rgba(233,220,255,0.65)"; ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(lv.desc, W / 2, 224);
 
     // 开始按钮
@@ -193,7 +193,7 @@ export class LevelSelectScene extends Scene {
     ctx.strokeStyle = unlocked ? PALETTE.gold : "rgba(120,110,140,0.5)"; ctx.lineWidth = 1;
     ctx.strokeRect(sb.x + 0.5, sb.y + 0.5, sb.w - 1, sb.h - 1);
     ctx.fillStyle = unlocked ? PALETTE.gold : "rgba(180,170,200,0.6)";
-    ctx.font = "12px monospace"; ctx.textBaseline = "middle";
+    ctx.font = "12px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textBaseline = "middle";
     ctx.fillText(unlocked ? "▶ 开始试炼" : "尚未解锁", sb.x + sb.w / 2, sb.y + sb.h / 2 + 1);
 
     // 无限模式按钮
@@ -205,7 +205,7 @@ export class LevelSelectScene extends Scene {
     ctx.strokeRect(eb.x + 0.5, eb.y + 0.5, eb.w - 1, eb.h - 1);
     ctx.shadowBlur = 0;
     ctx.fillStyle = PALETTE.danger;
-    ctx.font = "11px monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText("♾ 无限模式", eb.x + eb.w / 2, eb.y + eb.h / 2 + 1);
 
     ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
