@@ -5,6 +5,7 @@ import { Save } from "../systems/Save.js";
 import { CATEGORIES } from "../data/skins.js";
 import { MenuScene } from "./MenuScene.js";
 import { audio } from "../engine/Audio.js";
+import { getWitchSprite } from "../systems/WitchSprites.js";
 
 export class ShopScene extends Scene {
   constructor(game) {
@@ -164,12 +165,19 @@ export class ShopScene extends Scene {
     ctx.fillText(s.name, cx, b.y + 8);
 
     if (key === "character") {
-      const w = 34, h = 46, x = cx - w / 2, y = cy - h / 2;
-      ctx.fillStyle = s.body; ctx.fillRect(x, y, w, h);
-      ctx.strokeStyle = s.outline; ctx.lineWidth = 2;
-      ctx.shadowColor = s.outline; ctx.shadowBlur = 10;
-      ctx.strokeRect(x, y, w, h); ctx.shadowBlur = 0;
-      ctx.fillStyle = s.visor; ctx.fillRect(x + 6, y + 6, w - 12, 7);
+      const sprite = getWitchSprite(s.id, "sailor"); // 商城预览统一用初始形态·水手服少女
+      if (sprite) {
+        const drawH = 96;
+        const drawW = (sprite.width / sprite.height) * drawH;
+        ctx.drawImage(sprite, cx - drawW / 2, cy - drawH / 2 + 6, drawW, drawH);
+      } else {
+        const w = 34, h = 46, x = cx - w / 2, y = cy - h / 2;
+        ctx.fillStyle = s.body; ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = s.outline; ctx.lineWidth = 2;
+        ctx.shadowColor = s.outline; ctx.shadowBlur = 10;
+        ctx.strokeRect(x, y, w, h); ctx.shadowBlur = 0;
+        ctx.fillStyle = s.visor; ctx.fillRect(x + 6, y + 6, w - 12, 7);
+      }
     } else if (key === "background") {
       const bw = 110, bh = 58, bx = cx - bw / 2, by = cy - bh / 2;
       const gg = ctx.createLinearGradient(0, by, 0, by + bh);

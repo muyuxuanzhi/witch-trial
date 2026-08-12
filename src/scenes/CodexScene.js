@@ -5,6 +5,7 @@ import { PALETTE } from "../engine/Game.js";
 import { BUFFS } from "../data/buffs.js";
 import { BOSSES } from "../data/bosses.js";
 import { WITCH_FORMS } from "../data/witchForms.js";
+import { getWitchSprite } from "../systems/WitchSprites.js";
 import { MenuScene } from "./MenuScene.js";
 import { audio } from "../engine/Audio.js";
 
@@ -16,7 +17,14 @@ GOLDEN_IMG.src = "assets/golden-witch.png";
 const HAIYU_IMG = new Image();
 HAIYU_IMG.src = "assets/haiyu-witch.png";
 
-const TABS = ["角色", "Buff 增益", "Boss 图鉴"];
+// 角色立绘分页：角色皮肤id + 展示名 + 主题色
+const SPRITE_CHARS = [
+  { skinId: "default", label: "叶林 · 森林魔女", color: "#b96bff" },
+  { skinId: "gold",    label: "金橙 · 黄金魔女", color: "#ffcf5c" },
+  { skinId: "cyan",    label: "海於 · 碧海魔女", color: "#4fc3ff" },
+];
+
+const TABS = ["角色", "角色立绘", "Buff 增益", "Boss 图鉴"];
 
 export class CodexScene extends Scene {
   constructor(game) {
@@ -98,7 +106,8 @@ export class CodexScene extends Scene {
     ctx.clip();
 
     if (this.tab === 0) this._renderCharacter(ctx, W, H, top);
-    else if (this.tab === 1) this._renderBuffs(ctx, W, H, top);
+    else if (this.tab === 1) this._renderSpriteGallery(ctx, W, H, top);
+    else if (this.tab === 2) this._renderBuffs(ctx, W, H, top);
     else this._renderBosses(ctx, W, H, top);
 
     ctx.restore();
@@ -221,6 +230,49 @@ export class CodexScene extends Scene {
       }
     }
     return y0 + blockH;
+  }
+
+  // ===== 角色立绘页：三位魔女 × 4 阶段进化立绘，跑酷/Boss战里实际使用的同一批图 =====
+  _renderSpriteGallery(ctx, W, H, top) {
+    const pad = 16, gap = 5;
+    const cellW = (W - pad * 2 - gap * 3) / 4;
+    const cellH = 78;
+    let y = top + 8 - this.scroll;
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    for (const c of SPRITE_CHARS) {
+      ctx.fillStyle = c.color; ctx.font = "bold 11px monospace";
+      if (c.color === "#ffcf5c") { ctx.shadowColor = c.color; ctx.shadowBlur = 4; }
+      ctx.fillText(c.label, pad, y);
+      ctx.shadowBlur = 0;
+      y += 14;
+      for (let i = 0; i < WITCH_FORMS.length; i++) {
+        const f = WITCH_FORMS[i];
+        const x = pad + i * (cellW + gap);
+        ctx.fillStyle = "rgba(255,255,255,0.04)";
+        ctx.fillRect(x, y, cellW, cellH);
+        ctx.globalAlpha = 0.4;
+        ctx.strokeStyle = c.color; ctx.lineWidth = 1;
+        ctx.strokeRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
+        ctx.globalAlpha = 1;
+
+        const sprite = getWitchSprite(c.skinId, f.id);
+        const availW = cellW - 6, availH = cellH - 16;
+        if (sprite) {
+          let dw = availW, dh = (sprite.height / sprite.width) * dw;
+          if (dh > availH) { dh = availH; dw = (sprite.width / sprite.height) * dh; }
+          ctx.drawImage(sprite, x + (cellW - dw) / 2, y + 3 + (availH - dh) / 2, dw, dh);
+        } else {
+          ctx.fillStyle = "rgba(233,220,255,0.4)"; ctx.font = "8px monospace"; ctx.textAlign = "center";
+          ctx.fillText("加载中", x + cellW / 2, y + cellH / 2 - 5);
+          ctx.textAlign = "left";
+        }
+        ctx.fillStyle = "rgba(233,220,255,0.65)"; ctx.font = "7px monospace"; ctx.textAlign = "center";
+        ctx.fillText(f.name, x + cellW / 2, y + cellH - 11);
+        ctx.textAlign = "left";
+      }
+      y += cellH + 16;
+    }
+    this._maxScroll = Math.max(0, y + this.scroll - (H - 20));
   }
 
   // ===== Buff 页 =====

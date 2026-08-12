@@ -10,6 +10,7 @@ import { Particles } from "../systems/Particles.js";
 import { Save } from "../systems/Save.js";
 import { getLevelBoss, getLevel, TOTAL_LEVELS } from "../data/levels.js";
 import { getSkin } from "../data/skins.js";
+import { getWitchSprite, WITCH_SPRITES_ENABLED } from "../systems/WitchSprites.js";
 import { Difficulty } from "../data/difficulty.js";
 import { ACHIEVEMENTS } from "../data/achievements.js";
 import { MenuScene } from "./MenuScene.js";
@@ -896,6 +897,22 @@ if (this.endless) {
       ctx.beginPath(); ctx.arc(0, 2, 16 + Math.sin(this.t * 8) * 2, 0, Math.PI * 2); ctx.stroke();
       ctx.shadowBlur = 0;
     }
+
+    // ===== 立绘：命中角色专属立绘时，画立绘替代下方的尖顶帽+方块矢量造型 =====
+    // Boss 战里原矢量画法的身体底边大致在 y=12，这里让立绘底部对齐同一位置，
+    // 站位与弹幕高度对得上；战斗场景站定射击，画得比跑酷小一些避免遮挡弹幕。
+    if (WITCH_SPRITES_ENABLED) {
+      const formId = (this.carry && this.carry.formId) || "sailor";
+      const sprite = getWitchSprite(this.save.equipped.character, formId);
+      if (sprite) {
+        const drawH = 30;
+        const drawW = (sprite.width / sprite.height) * drawH;
+        ctx.drawImage(sprite, -drawW / 2, 12 - drawH, drawW, drawH);
+        ctx.restore();
+        return;
+      }
+    }
+
     ctx.fillStyle = this.weapon.color;
     ctx.shadowColor = this.weapon.color; ctx.shadowBlur = 8;
     // 尖顶帽

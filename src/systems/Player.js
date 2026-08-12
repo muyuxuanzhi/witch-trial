@@ -3,10 +3,12 @@
 // 支持僵直(stun)与无敌闪烁(invuln)视觉
 import { CONFIG } from "../data/config.js";
 import { WITCH_FORMS } from "../data/witchForms.js";
+import { getWitchSprite, WITCH_SPRITES_ENABLED } from "./WitchSprites.js";
 
 export class Player {
-  constructor(form) {
+  constructor(form, skinId) {
 this.form = form || WITCH_FORMS[0];
+    this.skinId = skinId || "default"; // 用于查找对应角色立绘，没有立绘时自动回退矢量绘制
     this.lane = 1;        // 0=上轨 1=下轨
     this.x = CONFIG.playerX;
     this.w = CONFIG.playerW;
@@ -91,6 +93,15 @@ const a = (1 - i / this.trail.length) * 0.35;
     const py = Math.round(this.y + (this.h - h));
     const bob = Math.floor(Math.sin(this.runT * 16) * 1.2);
 
+    // ===== 立绘预览：命中角色专属立绘时，直接画立绘替代下方矢量画法 =====
+    if (WITCH_SPRITES_ENABLED) {
+      const sprite = getWitchSprite(this.skinId, f.id);
+      if (sprite) {
+        this._drawSprite(ctx, sprite, px, py + bob, w, h);
+        return;
+      }
+    }
+
     // 扫帚（终极形态）：画在身体下方
     if (f.broom) {
       this._drawBroom(ctx, px, py + bob, w, h);
@@ -129,6 +140,16 @@ const a = (1 - i / this.trail.length) * 0.35;
 if (f.hat) {
       this._drawHat(ctx, px, py + bob, w, f);
     }
+  }
+
+  // 画角色立绘：碰撞框仅 16x22px，立绘是骑扫帚横向飞行构图（已离线裁边贴合内容），
+  // 按固定展示高度等比缩放，扫帚/脚部贴齐碰撞框底部（=贴近赛道），左右居中。
+  _drawSprite(ctx, sprite, px, py, w, h) {
+    const drawH = 50; // 立绘展示高度，觉得太大/太小可以直接改这个数
+    const drawW = (sprite.width / sprite.height) * drawH;
+    const dx = Math.round(px + w / 2 - drawW / 2);
+    const dy = Math.round(py + h - drawH);
+    ctx.drawImage(sprite, dx, dy, drawW, drawH);
   }
 
   _drawHat(ctx, px, py, w, f) {

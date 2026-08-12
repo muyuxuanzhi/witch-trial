@@ -35,7 +35,7 @@ export class RunScene extends Scene {
     this.save = Save.load();
     // 关卡专属背景：每关用自己的主题配色与背景风格（森林/毒沼/洞窟/城堡/月蚀）
     this.bg = new Background(game.width, game.height, levelBgSkin(this.level));
-    this.player = new Player(getFormByTrial(0));
+    this.player = new Player(getFormByTrial(0), this.save.equipped.character);
     this.spawner = new Spawner(getSkin("obstacle", this.save.equipped.obstacle));
     this.particles = new Particles();
 
