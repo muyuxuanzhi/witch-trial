@@ -107,6 +107,11 @@ export class RunScene extends Scene {
     // 三选一
     this.choices = [];
     this.chooseAppearT = 0;
+
+    // 连续收集连击：收集物累计到 3 个以上时在屏幕最右侧显示连击数字，
+    // 撞到障碍物立即清零消失。
+    this.combo = 0;
+    this.comboT = 0; // 距上次连击增加的时间，用于弹出动画
   }
 
   get hi() { return this.save.hi; }
@@ -270,6 +275,7 @@ export class RunScene extends Scene {
     this._checkCollisions();
     this._updateSmashRings(dt);
     this._updatePet(dt);
+    this.comboT += dt;
 
     this.shake *= 0.85;
   }
@@ -311,6 +317,8 @@ export class RunScene extends Scene {
     this.trial += amount;
     this.totalTrial += amount;
     this.collected++;
+    this.combo++;
+    this.comboT = 0;
     this.particles.burst(x, y, color, 12, { speed: 100 });
 
     // 形态进化检查
@@ -452,6 +460,7 @@ export class RunScene extends Scene {
     if (this.diff.runLifeMode) {
       e.dead = true;
       this.hitsTaken++;
+      this.combo = 0;
       Save.recordObstacleHit(this.save);
       this.player.hit();
       audio.play("hit");
@@ -485,6 +494,7 @@ export class RunScene extends Scene {
 
     this.trial -= penalty;
     this.player.hit();
+    this.combo = 0;
     Save.recordObstacleHit(this.save);
     audio.play("hit");
     this.hitStop = CONFIG.hitStop;
@@ -728,9 +738,35 @@ export class RunScene extends Scene {
     // Buff 图标列表（左下）
     this._renderBuffIcons(ctx, H);
 
+    // 连续收集连击：屏幕最右侧竖排显示，撞障碍立即清零消失
+    this._renderCombo(ctx, W, H);
+
     // 暂停按钮
     this._renderPauseBtn(ctx);
 
+    ctx.textAlign = "left";
+  }
+
+  // 收集连击达到 3 个以上才显示，避免刷屏；每次新增有一次短暂的弹出放大动画
+  _renderCombo(ctx, W, H) {
+    if (this.combo < 3) return;
+    const pop = Math.max(0, 1 - this.comboT * 4); // 0.25s 内的弹出缩放动画
+    const scale = 1 + pop * 0.6;
+    ctx.save();
+    ctx.translate(W - 12, H * 0.42);
+    ctx.scale(scale, scale);
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = PALETTE.gold;
+    ctx.shadowColor = PALETTE.gold;
+    ctx.shadowBlur = 8 + pop * 10;
+    ctx.font = "bold 20px 'Microsoft YaHei', 'PingFang SC', sans-serif";
+    ctx.fillText(`${this.combo}`, 0, 0);
+    ctx.font = "9px 'Microsoft YaHei', 'PingFang SC', sans-serif";
+    ctx.fillStyle = "rgba(255,207,92,0.9)";
+    ctx.fillText("连击 COMBO", 0, 15);
+    ctx.shadowBlur = 0;
+    ctx.restore();
     ctx.textAlign = "left";
   }
 

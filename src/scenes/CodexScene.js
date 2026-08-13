@@ -34,12 +34,14 @@ export class CodexScene extends Scene {
     this.scroll = 0;       // Boss/Buff 页滚动偏移
   }
 
+  // 顶栏分两行：第一行"返回+标题"，第二行独占一整行放分页标签，
+  // 避免窄屏下标题文字与标签栏挤在同一行导致互相遮挡重叠。
   _backBtn() { return { x: 8, y: 6, w: 54, h: 18 }; }
   _tabRects() {
     const W = this.game.width;
-    const tw = Math.min(96, (W - 80) / TABS.length);
-    const startX = W - 12 - tw * TABS.length;
-    return TABS.map((_, i) => ({ x: startX + i * tw, y: 6, w: tw - 4, h: 18 }));
+    const pad = 8, gap = 4;
+    const tw = (W - pad * 2 - gap * (TABS.length - 1)) / TABS.length;
+    return TABS.map((_, i) => ({ x: pad + i * (tw + gap), y: 27, w: tw, h: 18 }));
   }
 
   update(dt, input) {
@@ -98,8 +100,8 @@ export class CodexScene extends Scene {
       ctx.fillText(TABS[i], r.x + r.w / 2, r.y + r.h / 2 + 1);
     }
 
-    // 内容区裁剪
-    const top = 32;
+    // 内容区裁剪（顶栏现为两行：返回/标题 + 独占一行的分页标签，故下移内容起点）
+    const top = 50;
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, top, W, H - top - 14);

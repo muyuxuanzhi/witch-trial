@@ -124,7 +124,8 @@ export class Spawner {
           const drawH = OBSTACLE_SPRITE_H;
           const drawW = (sprite.width / sprite.height) * drawH;
           const cx = x + e.w / 2;
-          ctx.drawImage(sprite, Math.round(cx - drawW / 2), Math.round(groundY - drawH), Math.round(drawW), drawH);
+          const dx = Math.round(cx - drawW / 2), dy = Math.round(groundY - drawH);
+          this._drawSummonedObstacle(ctx, sprite, dx, dy, Math.round(drawW), drawH, time, e);
         } else {
           ctx.fillStyle = ob.fill;
           ctx.fillRect(x, yy, e.w, e.h);
@@ -150,6 +151,50 @@ export class Spawner {
         }
       }
     }
+  }
+
+  // 贴图障碍：加荧光描边 + 脚下召唤法阵，让贴图不再像"凭空出现"，
+  // 而是带着魔法气息被召唤出来。碰撞箱/位置计算完全不受影响，纯视觉叠加。
+  _drawSummonedObstacle(ctx, sprite, dx, dy, dw, dh, time, e) {
+    const ob = this.obSkin;
+    const glowColor = ob.outline || PALETTE.danger;
+    const phase = time * 5 + e.x * 0.05;
+    const pulse = 10 + Math.sin(phase) * 4;
+    const cx = dx + dw / 2, groundY = dy + dh;
+
+    ctx.save();
+    // 脚下召唤法阵：旋转的双层光圈 + 符文点，呼应"魔法召唤"的意象
+    ctx.save();
+    ctx.translate(cx, groundY - 2);
+    ctx.scale(1, 0.4);
+    ctx.globalAlpha = 0.55 + Math.sin(phase * 0.8) * 0.15;
+    ctx.strokeStyle = glowColor;
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 8;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(0, 0, dw * 0.42, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.rotate(phase * 0.7);
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const r = dw * 0.42;
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // 荧光描边光晕：叠加两层发光拷贝，勾勒出贴图轮廓的边缘光
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = pulse;
+    ctx.drawImage(sprite, dx, dy, dw, dh);
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 0.55;
+    ctx.shadowBlur = pulse * 1.8;
+    ctx.drawImage(sprite, dx, dy, dw, dh);
+    ctx.restore();
   }
 
   // 稀有金色六芒星：两枚交叠三角构成的六芒星 + 强光晕，明显区别于普通星星
