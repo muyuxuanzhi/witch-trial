@@ -56,6 +56,13 @@ export class Game {
       console.error("[Game] 场景 onExit 出错：", e);
     }
     this.scene = scene;
+    // ===== 修复：底部固定的操作提示(#hint) 是常驻 HTML 覆盖层，之前不论在哪个
+    // 场景都一直显示，会跟图鉴/商城等画面自己在底部画的文字重叠(UI重叠问题的根因之一)。
+    // 这里改成只在真正的跑酷关卡(RunScene)里显示，其余场景全部隐藏。
+    try {
+      const hintEl = document.getElementById("hint");
+      if (hintEl) hintEl.style.display = scene && scene.constructor && scene.constructor.name === "RunScene" ? "" : "none";
+    } catch (e) { /* 兜底，不影响切场景 */ }
     // ===== 场景切换兜底 =====
     // 1) 重置 Input 的指针/键盘一次性状态，避免上一场景的 tap 或按键状态
     //    被带进新场景，导致新场景一打开就被错误地触发一次点击/回车——这是

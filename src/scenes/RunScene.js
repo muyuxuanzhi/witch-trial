@@ -36,7 +36,7 @@ export class RunScene extends Scene {
     // 关卡专属背景：每关用自己的主题配色与背景风格（森林/毒沼/洞窟/城堡/月蚀）
     this.bg = new Background(game.width, game.height, levelBgSkin(this.level));
     this.player = new Player(getFormByTrial(0), this.save.equipped.character);
-    this.spawner = new Spawner(getSkin("obstacle", this.save.equipped.obstacle));
+    this.spawner = new Spawner(getSkin("obstacle", this.save.equipped.obstacle), this.level.name);
     this.particles = new Particles();
 
     // ===== 先天角色能力：海於专属契约鲸鱼 =====
@@ -387,13 +387,16 @@ export class RunScene extends Scene {
     for (const e of this.spawner.entities) {
       if (e.dead) continue;
 
-      // 稀有金色六芒星在中间轨(lane=-1)：切轨途中经过即可拾取
-      // 用玩家中心y 与中间线的竖直距离判定，配合水平重叠
+      // 六芒星在中间轨(lane=-1)：必须主动切轨经过中线附近才能拾到，
+      // 而不是停在某条固定轨道上就被动收走。
+      // 之前 dy<24 时，静止停在上轨(dy≈22)也满足条件，等于不切轨也能白拿；
+      // 收紧到 dy<10——两条轨道静止时的 dy 分别约 22 / 50，只有真正切轨经过
+      // 中线的那一瞬间才会落入这个窗口，逼玩家必须移动才能收集。
       if (e.orbKind === "rarestar") {
         const prevRight = (e.prevX != null ? e.prevX : e.x) + e.w;
         const overlapX = e.x < pR && prevRight > pL;
         const dy = Math.abs(this.player.cy - CONFIG.laneMidY);
-        if (overlapX && dy < 24) {
+        if (overlapX && dy < 10) {
           e.dead = true;
           const doubleMul = 1 + this.stacks("double");
           const val = CONFIG.rareStarValue * doubleMul;
@@ -402,6 +405,7 @@ export class RunScene extends Scene {
           //拾取特效更华丽
           this.particles.burst(e.x + e.w / 2, CONFIG.laneMidY, PALETTE.gold, 24, { speed: 170, life: 0.8, size: 3 });
           Save.recordCollect(this.save, 1);
+          Save.addHexagram(this.save, 1); // 六芒星：独立于金币的收集货币，用于商店解锁武器
         }
         continue;
       }

@@ -2,8 +2,7 @@
 export const CHARACTER_SKINS = [
   { id: "default", name: "森林魔女", charName: "叶林", price: 0,   body: "#3d2a54", outline: "#b96bff", visor: "#4fe0d0", trail: "#4fe0d0", desc: "叶林 · 森林魔女学院的见习生。每一位魔女都从最初始的水手服少女形态出发，通过试炼逐级进化。" },
   { id: "cyan",    name: "碧海魔女", charName: "海於", price: 40,  body: "#123240", outline: "#4fe0d0", visor: "#b96bff", trail: "#4fe0d0", desc: "海於 · 喜欢独处的碧海之族，随行的契约鲸鱼形影不离。深海般的静谧配色。", pet: { color: "#4fc3ff", shieldInterval: 30 } },
-  { id: "crimson", name: "绯红魔女", charName: "叶林", price: 80,  body: "#3a1020", outline: "#ff5c8a", visor: "#ffcf5c", trail: "#ff5c8a", desc: "绯红如血的高贵配色。同样从零开始，在试炼中积攒星光、进化形态。" },
-  { id: "gold",    name: "黄金魔女", charName: "金橙", price: 150, body: "#3a2e10", outline: "#ffcf5c", visor: "#ffffff", trail: "#ffcf5c", desc: "金橙 · 慵懒的电波系魔女。最爱坚果巧克力与一切金灿灿。初始形态起跑，试炼之路漫漫其修远兮。" },
+  { id: "gold",    name: "黄金魔女", charName: "金橙", price: 150, body: "#3a2e10", outline: "#ffcf5c", visor: "#ffffff", trail: "#ffcf5c", desc: "金橙 · 慵懒的电波系魔女。最爱坚果巧克力与一切金灿灿。初始形态起跑，试炼之路漫漫其修远兮。先天技能「点石成金」：通关奖励的金币数量翻倍。", coinMultiplier: 2 },
 ];
 
 export const BACKGROUND_SKINS = [
@@ -19,11 +18,13 @@ export const OBSTACLE_SKINS = [
 ];
 
 // 武器皮肤：同时也是弹幕战可选武器（数据源在 weapons.js，这里补充商店价格/展示）
+// currency:"hexagram" 表示用六芒星（跑酷/Boss战拾取的稀有收集品）解锁，而非金币；
+// 价格从最低 20 枚六芒星起步，逐件递增，越强力/越有特色的武器越贵。
 export const WEAPON_SKINS = [
-  { id: "wand",   name: "星辉法杖", price: 0,   fill: "#123240", outline: "#4fe0d0", stripe: "#4fe0d0" },
-  { id: "spread", name: "群星散射", price: 120, fill: "#3a2e10", outline: "#ffcf5c", stripe: "#ffcf5c" },
-  { id: "beam",   name: "月光贯穿", price: 200, fill: "#2a1a3a", outline: "#b96bff", stripe: "#b96bff" },
-  { id: "homing", name: "追踪飞星", price: 280, fill: "#3a1020", outline: "#ff8bd0", stripe: "#ff8bd0" },
+  { id: "wand",   name: "星辉法杖", price: 0,  currency: "coins",    fill: "#123240", outline: "#4fe0d0", stripe: "#4fe0d0" },
+  { id: "spread", name: "群星散射", price: 20, currency: "hexagram", fill: "#3a2e10", outline: "#ffcf5c", stripe: "#ffcf5c" },
+  { id: "beam",   name: "月光贯穿", price: 35, currency: "hexagram", fill: "#2a1a3a", outline: "#b96bff", stripe: "#b96bff" },
+  { id: "homing", name: "追踪飞星", price: 55, currency: "hexagram", fill: "#3a1020", outline: "#ff8bd0", stripe: "#ff8bd0" },
 ];
 
 export const CATEGORIES = [

@@ -4,10 +4,18 @@
 import { CONFIG } from "../data/config.js";
 import { PALETTE } from "../engine/Game.js";
 import { getSkin } from "../data/skins.js";
+import { getObstacleSprite } from "./ObstacleSprites.js";
+
+// 障碍物贴图统一绘制高度（碰撞箱不受此影响，仅视觉呈现，
+// 保证同一关卡内每个障碍看起来大小一致，不会因随机 h 产生"错位大小不一"的既往问题）
+const OBSTACLE_SPRITE_H = 34;
 
 export class Spawner {
-  constructor(obSkin) {
+  // levelName: 当前关卡名（如"迷雾森林"），用于按关卡取专属障碍物贴图；
+  // 无对应贴图（如无尽模式随机关卡名）时自动回退到原有配色矢量绘制。
+  constructor(obSkin, levelName) {
     this.obSkin = obSkin || getSkin("obstacle", "default");
+    this.levelName = levelName || null;
     this.entities = [];
     this.timer = 0;
     this.interval = CONFIG.spawnStart;
@@ -101,20 +109,34 @@ export class Spawner {
 
   render(ctx, time) {
     const ob = this.obSkin;
+    const sprite = getObstacleSprite(this.levelName);
     for (const e of this.entities) {
       if (e.type === "obstacle") {
         const topY = CONFIG.laneTopY[e.lane];
         const y = topY + (CONFIG.playerH - e.h);
-        ctx.fillStyle = ob.fill;
-        ctx.fillRect(Math.round(e.x), Math.round(y), e.w, e.h);
-        ctx.strokeStyle = ob.outline;
-        ctx.lineWidth = 1;
-        ctx.shadowColor = ob.outline;
-        ctx.shadowBlur = 6;
-        ctx.strokeRect(Math.round(e.x) + 0.5, Math.round(y) + 0.5, e.w - 1, e.h - 1);
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = ob.stripe;
-        ctx.fillRect(Math.round(e.x) + 3, Math.round(y) + 3, e.w - 6, 2);
+        const x = Math.round(e.x), yy = Math.round(y);
+        if (sprite) {
+          // 关卡专属贴图：碰撞判定始终只用 e.x/e.w/e.lane（未改动，见 RunScene 碰撞逻辑），
+          // 这里只是换个画法——按贴图自身宽高比、以统一的高度绘制，
+          // 底部与所有旧矢量障碍一样贴合轨道地面、水平居中于碰撞箱，
+          // 避免直接拉伸塞进 16×20~30 的判定框导致的比例挤扁/走形。
+          const groundY = topY + CONFIG.playerH;
+          const drawH = OBSTACLE_SPRITE_H;
+          const drawW = (sprite.width / sprite.height) * drawH;
+          const cx = x + e.w / 2;
+          ctx.drawImage(sprite, Math.round(cx - drawW / 2), Math.round(groundY - drawH), Math.round(drawW), drawH);
+        } else {
+          ctx.fillStyle = ob.fill;
+          ctx.fillRect(x, yy, e.w, e.h);
+          ctx.strokeStyle = ob.outline;
+          ctx.lineWidth = 1;
+          ctx.shadowColor = ob.outline;
+          ctx.shadowBlur = 6;
+          ctx.strokeRect(x + 0.5, yy + 0.5, e.w - 1, e.h - 1);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = ob.stripe;
+          ctx.fillRect(x + 3, yy + 3, e.w - 6, 2);
+        }
       } else {
         const cx = e.x + e.w / 2;
         const cy = this._centerY(e);

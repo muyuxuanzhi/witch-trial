@@ -5,6 +5,7 @@ function defaults() {
   return {
     coins: 0,
     hi: 0,
+    hexagram: 0, // 六芒星：金币之外的独立收集货币，专门用于在商店解锁武器
     owned: { character: ["default"], background: ["default"], obstacle: ["default"], weapon: ["wand"] },
     equipped: { character: "default", background: "default", obstacle: "default", weapon: "wand" },
     // 关卡进度：已解锁到第几关（1~5），已通关的关卡 id 集合
@@ -54,6 +55,7 @@ export const Save = {
     const merged = {
       coins: data.coins ?? d.coins,
       hi: data.hi ?? d.hi,
+      hexagram: data.hexagram ?? d.hexagram,
       owned: {
         character: data.owned?.character ?? d.owned.character.slice(),
         background: data.owned?.background ?? d.owned.background.slice(),
@@ -84,11 +86,14 @@ export const Save = {
     return (data.owned[category] || []).includes(id);
   },
 
-  // 购买：成功返回 true
+  // 购买：成功返回 true。skin.currency==="hexagram" 时消耗六芒星而非金币（目前武器解锁走这条路）
   buy(data, category, skin) {
     if (this.isOwned(data, category, skin.id)) return false;
-    if (data.coins < skin.price) return false;
-    data.coins -= skin.price;
+    const useHex = skin.currency === "hexagram";
+    const bal = useHex ? (data.hexagram || 0) : data.coins;
+    if (bal < skin.price) return false;
+    if (useHex) data.hexagram -= skin.price;
+    else data.coins -= skin.price;
     data.owned[category].push(skin.id);
     data.equipped[category] = skin.id; // 购买后自动装备
     this.save(data);
@@ -156,6 +161,12 @@ export const Save = {
         data.statStarChain = data.runStats.chain;
       }
     }
+  },
+
+  // 拾取六芒星：累加持久货币并立即落盘（避免半局退出丢失），配合 recordCollect 一起调用
+  addHexagram(data, n = 1) {
+    data.hexagram = (data.hexagram || 0) + n;
+    this.save(data);
   },
 
   // 障碍受击（连续拾取清零 + 计入本局受击数）

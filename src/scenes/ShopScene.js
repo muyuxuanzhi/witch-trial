@@ -24,6 +24,17 @@ export class ShopScene extends Scene {
 
   _setToast(msg) { this.toast = msg; this.toastT = 1.4; }
 
+  // 武器解锁走六芒星货币，其余走金币——统一取"某个皮肤该用哪种货币结算"
+  _currencyOf(skin) {
+    const useHex = skin.currency === "hexagram";
+    return {
+      useHex,
+      balance: useHex ? (this.save.hexagram || 0) : this.save.coins,
+      symbol: useHex ? "✶" : "金",
+      label: useHex ? "六芒星" : "金币",
+    };
+  }
+
   // ---- 布局（update/render 共用，保证点击区域与显示一致） ----
   _backBtn() { return { x: 8, y: 6, w: 54, h: 18 }; }
   _catRects() { return CATEGORIES.map((_, i) => ({ x: 12 + i * 68, y: 30, w: 62, h: 16 })); }
@@ -71,7 +82,10 @@ export class ShopScene extends Scene {
       else { Save.equip(this.save, cat, skin.id); this._setToast("已装备：" + skin.name); }
     } else {
       if (Save.buy(this.save, cat, skin)) this._setToast("购买成功并装备：" + skin.name);
-      else this._setToast("金币不足！还差 " + (skin.price - this.save.coins));
+      else {
+        const c = this._currencyOf(skin);
+        this._setToast(`${c.label}不足！还差 ${skin.price - c.balance}`);
+      }
     }
   }
 
@@ -94,10 +108,12 @@ export class ShopScene extends Scene {
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText("‹ 返回", back.x + back.w / 2, back.y + back.h / 2 + 1);
 
-    // 金币
+    // 金币 + 六芒星（六芒星专门用于解锁武器，跑酷/Boss战拾取）
     ctx.textAlign = "right"; ctx.textBaseline = "top";
     ctx.fillStyle = PALETTE.gold; ctx.font = "11px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     ctx.fillText(`金币 ${this.save.coins}`, W - 12, 8);
+    ctx.fillStyle = "#ffd94a";
+    ctx.fillText(`✶ 六芒星 ${this.save.hexagram || 0}`, W - 12, 20);
 
     // 分类标签
     const catR = this._catRects();
@@ -130,7 +146,11 @@ export class ShopScene extends Scene {
       let tag, col;
       if (equipped) { tag = "装备中"; col = PALETTE.cyan; }
       else if (owned) { tag = "已拥有"; col = "rgba(233,220,255,0.6)"; }
-      else { tag = s.price + " 金"; col = this.save.coins >= s.price ? PALETTE.gold : PALETTE.danger; }
+      else {
+        const c = this._currencyOf(s);
+        tag = s.price + " " + c.symbol;
+        col = c.balance >= s.price ? PALETTE.gold : PALETTE.danger;
+      }
       ctx.fillStyle = col;
       ctx.fillText(tag, r.x + r.w - 6, r.y + r.h / 2 + 1);
     }
@@ -208,7 +228,11 @@ export class ShopScene extends Scene {
     let label, col;
     if (equipped) { label = "已装备"; col = PALETTE.cyan; }
     else if (owned) { label = "装备"; col = PALETTE.gold; }
-    else { label = "购买 (" + s.price + ")"; col = this.save.coins >= s.price ? PALETTE.gold : PALETTE.danger; }
+    else {
+      const c = this._currencyOf(s);
+      label = `购买 (${s.price}${c.symbol})`;
+      col = c.balance >= s.price ? PALETTE.gold : PALETTE.danger;
+    }
     ctx.fillStyle = "rgba(185,107,255,0.14)";
     ctx.fillRect(btn.x, btn.y, btn.w, btn.h);
     ctx.strokeStyle = col; ctx.lineWidth = 1;

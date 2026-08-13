@@ -121,10 +121,10 @@ export class CodexScene extends Scene {
 
   // ===== 角色页（可滚动，每角色独立卡片不硬挤）=====
   _renderCharacter(ctx, W, H, top) {
-    const blockH = 130, gap = 16;
+    const gap = 16;
     let y = top + 8 - this.scroll;
     // 叶林卡片
-    y = this._renderCharBlock(ctx, W, y, blockH,
+    y = this._renderCharBlock(ctx, W, y,
       CHAR_IMG, "叶林 · 森林魔女", "rgba(185,107,255,0.5)", PALETTE.gold, [
       "森林魔女学院的见习生，元气活泼、好奇",
       "莽撞又坚韧。并非天赋型魔女，被评",
@@ -133,7 +133,7 @@ export class CodexScene extends Scene {
       "秘境旅程。",
     ], [
       "形态进化线",
-      WITCH_FORMS.map((f, i) => `◆ ${f.name} (试炼值 ${f.threshold})`).join("\n"),
+      ...WITCH_FORMS.map((f) => `◆ ${f.name} (试炼值 ${f.threshold})`),
       "口头禅：「深呼吸……我准备好了！」",
     ], ["#8fb8ff", "#b96bff", "#d08bff", "#ffcf5c"]);
     y += gap;
@@ -141,13 +141,15 @@ export class CodexScene extends Scene {
     ctx.fillStyle = "rgba(185,107,255,0.15)";
     ctx.fillRect(16, y - gap / 2 - 0.5, W - 32, 1);
     // 黄金魔女卡片
-    y = this._renderCharBlock(ctx, W, y, blockH,
+    y = this._renderCharBlock(ctx, W, y,
       GOLDEN_IMG, "金橙 · 黄金魔女", "#ffcf5c", "#ffcf5c", [
       "慵懒的电波系魔女。爱吃甜食尤其钟爱",
       "坚果巧克力，喜欢一切金灿灿的东西。",
       "为了通关后兑现大魔女朋友的约定——",
       "10 万箱金箔坚果巧克力，金橙拼尽全力。",
     ], [
+      "先天能力「点石成金」：通关奖励的金币",
+      "数量翻倍。",
       "可通过商城解锁皮肤（150 金币）",
       "解锁后同样从森林魔女初始形态开始。",
       "口头禅：「为了金灿灿和甜品……power！！！」",
@@ -157,7 +159,7 @@ export class CodexScene extends Scene {
     ctx.fillStyle = "rgba(79,195,255,0.15)";
     ctx.fillRect(16, y - gap / 2 - 0.5, W - 32, 1);
     // 海於卡片
-    y = this._renderCharBlock(ctx, W, y, blockH + 20,
+    y = this._renderCharBlock(ctx, W, y,
       HAIYU_IMG, "海於 · 碧海魔女", "#4fc3ff", "#4fc3ff", [
       "喜欢独处，胜过热闹的人群。",
       "族群天生拥有海之力，通过试炼就能",
@@ -177,9 +179,15 @@ export class CodexScene extends Scene {
     this._maxScroll = Math.max(0, totalH + this.scroll - (H - 20));
   }
 
-  // 通用角色卡片（可滚动复用）
-  _renderCharBlock(ctx, W, y0, blockH, img, name, strokeColor, nameColor, descLines, infoLines, colors) {
+  // 通用角色卡片（可滚动复用）。
+  // 卡片高度按实际文字行数动态计算（而不是固定死一个数），
+  // 避免之前"形态进化线"4条被压成一行、内容变多时又撑破固定高度卡片、
+  // 跟下一张卡/分隔线挤在一起的UI重叠问题。
+  _renderCharBlock(ctx, W, y0, img, name, strokeColor, nameColor, descLines, infoLines, colors) {
     const imgW = Math.min(80, W * 0.22);
+    const nameH = 16, lineH = 11, descGap = 2, padTop = 4, padBottom = 10;
+    const contentH = nameH + descLines.length * lineH + descGap + infoLines.length * lineH;
+    const blockH = Math.max(contentH + padTop + padBottom, 74); // 保底高度，避免头像被挤扁
     const imgX = 16, imgY = y0 + 6;
     const ratio = (img.naturalHeight && img.naturalWidth) ? (img.naturalHeight / img.naturalWidth) : 1;
     const ih = Math.min(blockH - 16, imgW * ratio);
@@ -202,31 +210,33 @@ export class CodexScene extends Scene {
     ctx.restore();
 
     const tx = imgX + iw + 16;
-    let ty = y0 + 4;
+    let ty = y0 + padTop;
     ctx.textAlign = "left"; ctx.textBaseline = "top";
     ctx.fillStyle = nameColor; ctx.font = "bold 12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
     if (nameColor === "#ffcf5c") { ctx.shadowColor = "#ffcf5c"; ctx.shadowBlur = 4; }
     ctx.fillText(name, tx, ty);
     ctx.shadowBlur = 0;
-    ty += 16;
+    ty += nameH;
 
     // 描述
     ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif"; ctx.fillStyle = nameColor === "#ffcf5c" ? "rgba(255,247,200,0.85)" : "rgba(233,220,255,0.85)";
-    for (const l of descLines) { ctx.fillText(l, tx, ty); ty += 11; }
-    ty += 2;
+    for (const l of descLines) { ctx.fillText(l, tx, ty); ty += lineH; }
+    ty += descGap;
 
-    // 额外信息
+    // 额外信息：每条"◆"形态条目按顺序取对应颜色（用计数而非 indexOf，避免重复文本时取错色/越界）
     if (infoLines.length) {
-      ctx.fillStyle = nameColor === "#ffcf5c" ? "#ffd94a" : PALETTE.neon;
+      const defaultColor = nameColor === "#ffcf5c" ? "#ffd94a" : PALETTE.neon;
       ctx.font = "8px 'Microsoft YaHei', 'PingFang SC', sans-serif";
+      let formIdx = 0;
       for (const l of infoLines) {
         if (l.startsWith("◆")) {
-          // 进化形态条目用对应颜色
-          const idx = infoLines.indexOf(l);
-          if (idx < colors.length) ctx.fillStyle = colors[idx] || (nameColor === "#ffcf5c" ? "#ffd94a" : PALETTE.neon);
+          ctx.fillStyle = colors[formIdx] || defaultColor;
+          formIdx++;
+        } else {
+          ctx.fillStyle = defaultColor;
         }
         ctx.fillText(l, tx, ty);
-        ty += 11;
+        ty += lineH;
       }
     }
     return y0 + blockH;

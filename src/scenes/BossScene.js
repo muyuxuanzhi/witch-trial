@@ -11,6 +11,7 @@ import { Save } from "../systems/Save.js";
 import { getLevelBoss, getLevel, TOTAL_LEVELS } from "../data/levels.js";
 import { getSkin } from "../data/skins.js";
 import { getWitchSprite, WITCH_SPRITES_ENABLED } from "../systems/WitchSprites.js";
+import { getBossSprite } from "../systems/BossSprites.js";
 import { Difficulty } from "../data/difficulty.js";
 import { ACHIEVEMENTS } from "../data/achievements.js";
 import { MenuScene } from "./MenuScene.js";
@@ -121,7 +122,10 @@ export class BossScene extends Scene {
     this.state = "fight";// fight | win | lose | paused
     this.t = 0;
     this.endT = 0;
-    this.reward = level.reward || 30;
+    // 黄金魔女先天技能「点石成金」：通关奖励的金币数量翻倍（coinMultiplier 来自 skins.js）
+    const charSkinForReward = getSkin("character", this.save.equipped.character);
+    this.coinMultiplier = (charSkinForReward && charSkinForReward.coinMultiplier) || 1;
+    this.reward = (level.reward || 30) * this.coinMultiplier;
   }
 
   _pauseBtn() { return { x: this.game.width - 26, y: 8, w: 18, h: 16 }; }
@@ -290,6 +294,7 @@ export class BossScene extends Scene {
     const p = this.player;
     this.starCollected++;
     Save.recordCollect(this.save, 1);
+    Save.addHexagram(this.save, 1); // 六芒星：独立于金币的收集货币，用于商店解锁武器
     audio.play("rareStar");
     // 回血：普通 +6；地狱 3 血制下最多回 1 滴（避免瞬间回满，无敌才是核心收益）
     p.hp = Math.min(p.maxHp, p.hp + (this.diff.bossLifeMode ? 1 : 6));
@@ -316,11 +321,15 @@ export class BossScene extends Scene {
     if (w.fireMode === "single") {
       this.playerBullets.push(mk(w.bulletSpeed, 0));
     } else if (w.fireMode === "spread") {
+      // 三发扇形弹，且各自持续外扩(curve)——距离越远越分散，特色弹道
       for (const a of [-0.28, 0, 0.28]) {
-        this.playerBullets.push(mk(Math.cos(a) * w.bulletSpeed, Math.sin(a) * w.bulletSpeed));
+        const b = mk(Math.cos(a) * w.bulletSpeed, Math.sin(a) * w.bulletSpeed);
+        b.curve = a === 0 ? 0 : Math.sign(a) * (w.spreadCurve || 0);
+        this.playerBullets.push(b);
       }
     } else if (w.fireMode === "beam") {
-      const b = mk(w.bulletSpeed, 0); b.r = 7; b.pierce = true;
+      // 高伤贯穿大弹：只对Boss结算一次伤害(hitOnce,见_updateBullets)，且飞行途中持续加速
+      const b = mk(w.bulletSpeed, 0); b.r = 7; b.pierce = true; b.accel = w.beamAccel || 0;
       this.playerBullets.push(b);
     } else if (w.fireMode === "homing") {
       this.playerBullets.push(mk(w.bulletSpeed, 0, true));
@@ -505,17 +514,24 @@ export class BossScene extends Scene {
         const na = cur + Math.max(-3 * dt, Math.min(3 * dt, ang - cur));
         b.vx = Math.cos(na) * spd; b.vy = Math.sin(na) * spd;
       }
+      // 群星散射的特色弹道：持续向外扩散（curve 为加速度 px/s²）
+      if (b.curve) b.vy += b.curve * dt;
+      // 月光贯穿的特色弹道：飞行途中持续加速
+      if (b.accel) b.vx += b.accel * dt;
       b.x += b.vx * dt; b.y += b.vy * dt;
       if (b.x < -10 || b.x > W + 10 || b.y < -10 || b.y > H + 10) b.dead = true;
     }
     // 玩家子弹 vs Boss
     if (!endMode && this.state === "fight") {
       for (const b of this.playerBullets) {
-        if (b.dead) continue;
+        if (b.dead || b.hitOnce) continue;
         if (Math.abs(b.x - this.bx) < this.bw / 2 && Math.abs(b.y - this.by) < this.bh / 2) {
           this.bhp -= b.dmg;
           this.particles.burst(b.x, b.y, b.color, 6, { speed: 80, life: 0.3, size: 2 });
-          if (!b.pierce) b.dead = true;
+          // 贯穿弹只结算一次伤害后继续飞行(不再重复触发)，非贯穿弹直接消失——
+          // 修复此前贯穿弹每帧重叠都扣血、实际伤害远超数值面板的问题
+          if (b.pierce) b.hitOnce = true;
+          else b.dead = true;
           if (this.bhp <= 0) { this._win(); break; }
         }
       }
@@ -782,6 +798,21 @@ if (this.endless) {
     const cx = this.bx, cy = this.by;
     ctx.save();
     ctx.translate(cx, cy);
+
+    // Boss 专属贴图：按 Boss 名取图，命中判定始终只用 this.bw/this.bh（未改动），
+    // 这里只是换个画法——贴图统一绘制进 bw×bh 的可视框（居中对齐），
+    // 保证换成贴图后视觉大小与原矢量形状占位一致，不会出现忽大忽小/错位。
+    const sprite = getBossSprite(b.name);
+    if (sprite) {
+      ctx.shadowColor = b.color; ctx.shadowBlur = 10;
+      const drawH = this.bh;
+      const drawW = (sprite.width / sprite.height) * drawH;
+      ctx.drawImage(sprite, -drawW / 2, -drawH / 2, drawW, drawH);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+      return;
+    }
+
     ctx.shadowColor = b.color; ctx.shadowBlur = 10;
     ctx.fillStyle = b.color;
     ctx.strokeStyle = b.capColor; ctx.lineWidth = 2;
@@ -1026,7 +1057,8 @@ if (this.endless) {
     }
     ctx.shadowBlur = 0;
     ctx.fillStyle = PALETTE.text; ctx.font = "12px 'Microsoft YaHei', 'PingFang SC', sans-serif";
-    ctx.fillText(`金币 +${this.reward}   （共 ${this.save.coins}）`, W / 2, H * 0.44);
+    const rewardSuffix = this.coinMultiplier > 1 ? `（点石成金 ×${this.coinMultiplier}）` : "";
+    ctx.fillText(`金币 +${this.reward}${rewardSuffix}   （共 ${this.save.coins}）`, W / 2, H * 0.44);
     ctx.fillStyle = "#ffd94a";
     ctx.fillText(`✶ 六芒星收集 x${this.starCollected}`, W / 2, H * 0.5);
     if (this.endless) ctx.fillText(`继续挑战 第${this.round + 1}轮（Boss 随机·属性继续叠加）`, W / 2, H * 0.58);
