@@ -1,6 +1,13 @@
 # 魔女试炼 / Witch Trial
 
 <p align="center">
+  <a href="https://muyuxuanzhi.github.io/witch-trial/"><img src="https://img.shields.io/badge/🎮_在线试玩-立即开始-ff69b4?style=for-the-badge" alt="在线试玩"></a>
+  <img src="https://img.shields.io/github/stars/muyuxuanzhi/witch-trial?style=for-the-badge&color=yellow&label=Star" alt="stars">
+  <img src="https://img.shields.io/badge/引擎-HTML5%20Canvas%20自研-6c5ce7?style=for-the-badge" alt="engine">
+  <img src="https://img.shields.io/badge/类型-跑酷%20%2B%20弹幕Boss战%20%2B%20肉鸽-2ecc71?style=for-the-badge" alt="genre">
+</p>
+
+<p align="center">
   <img src="assets/cover.png" alt="魔女试炼 主角 —— 森林魔女 叶林" width="70%">
 </p>
 
@@ -137,3 +144,11 @@ neon-runner/
 ## 存档
 
 localStorage 持久化：金币、最高分、已购/已装备皮肤、关卡解锁进度、成就进度统计和已解锁成就列表。无限模式仅累加金币，不影响关卡解锁。新版本存档自动向前兼容旧版数据。
+
+---
+
+## 关于作者
+
+我是 **muyuxuanzhi**，本项目从策划设计到全部代码独立完成：关卡/Boss弹幕设计、肉鸽成长与经济数值、商城/图鉴/成就/存档系统均为自研（美术素材见 `assets/`）。目前在找 **游戏策划（数值 / 系统设计）** 或 **游戏客户端 / 玩法程序员（Unity · Unreal · 自研引擎方向）** 相关机会，欢迎交流 🙌
+
+更多项目与技术栈 → 我的 [GitHub 主页](https://github.com/muyuxuanzhi)
