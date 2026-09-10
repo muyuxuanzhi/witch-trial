@@ -130,14 +130,15 @@ export class BossScene extends Scene {
     this.hellStarSpawned = false;      // 是否已生成过那唯一一次
     this.hellStarHpRatio = 0.46 + Math.random() * 0.08; // 46%~54%，即"半血左右"
 
-    // ===== 地狱难度：Boss 半血"大招"符卡（参考东方 Project 符卡系统）=====
-    // 血量掉到约 50% 时触发一次：暂停常规弹幕，改为播放编排好的多段攻击循环，
+    // ===== 地狱难度：Boss 大招符卡（参考东方 Project 符卡系统）=====
+    // 血量每掉到一个阈值就触发一次：暂停常规弹幕，改为播放编排好的多段攻击循环，
     // 并在屏幕上展示符卡名，持续一段时间后自动结束、恢复常规攻击。
+    // 半血(50%)一次，残血(15%)"背水一战"再来一发——越到残局越有压迫感。
     this.ultimate = (this.diff.id === "hell" && this.boss.ultimate) ? this.boss.ultimate : null;
-    this.ultimateTriggered = false;
+    this.ultimateThresholds = [0.5, 0.15];
+    this.ultimateTriggerIdx = 0;   // 已触发过几次（用于依次比对 thresholds）
     this.ultimateActive = false;
     this.ultimateT = 0;
-    this.ultimateHpRatio = 0.5;
     this.ultimateLoopTimers = this.ultimate ? this.ultimate.loop.map(() => 0) : [];
     this.ultimateNameT = 0;   // 符卡名横幅淡入淡出计时
 
@@ -468,11 +469,12 @@ export class BossScene extends Scene {
     this.bx = (this.game.width - 70) + Math.sin(this.t * 1.5) * 6;
   }
 
-  // 触发判定：Boss 血量降到约 50% 时，整局只触发一次大招符卡
+  // 触发判定：Boss 血量每掉到一个阈值（50% → 15%）就触发一次大招符卡
   _updateUltimateTrigger() {
-    if (!this.ultimate || this.ultimateTriggered) return;
-    if (this.bhp > 0 && this.bhp <= this.bMaxHp * this.ultimateHpRatio) {
-      this.ultimateTriggered = true;
+    if (!this.ultimate || this.ultimateTriggerIdx >= this.ultimateThresholds.length) return;
+    const ratio = this.ultimateThresholds[this.ultimateTriggerIdx];
+    if (this.bhp > 0 && this.bhp <= this.bMaxHp * ratio) {
+      this.ultimateTriggerIdx++;
       this.ultimateActive = true;
       this.ultimateT = 0;
       this.ultimateLoopTimers = this.ultimate.loop.map(() => 0);
@@ -491,7 +493,8 @@ export class BossScene extends Scene {
       this.ultimateLoopTimers[i] += dt;
       if (this.ultimateLoopTimers[i] >= pat.interval) {
         this.ultimateLoopTimers[i] = 0;
-        this._emitPattern(pat);
+        // 大招弹幕使用专属高亮配色（多色 + 白色描边发光），一眼就能看出"这是大招"
+        this._emitPattern(pat, this.ultimate.colors);
       }
     }
     if (this.ultimateNameT > 0) this.ultimateNameT -= dt;
@@ -516,12 +519,19 @@ export class BossScene extends Scene {
     }
   }
 
-  _emitPattern(pat) {
+  // colorOverride：大招符卡专用的多色数组（按发射顺序轮流取色 + 高亮发光），
+  // 不传则沿用 Boss 主题色（常规弹幕原有效果不变）。
+  _emitPattern(pat, colorOverride) {
     const ox = this.bx - this.bw / 2, oy = this.by;
     // 地狱难度：弹速加快
     const spd = pat.bulletSpeed * BOSS_BULLET_SPEED_SCALE * this.diff.bossBulletSpeedMul;
-    const col = this.boss.color;
-    const push = (vx, vy) => this.bossBullets.push({ x: ox, y: oy, vx, vy, r: 4, color: col, dead: false });
+    const colors = colorOverride && colorOverride.length ? colorOverride : [this.boss.color];
+    const glow = !!colorOverride;
+    let ci = 0;
+    const push = (vx, vy) => {
+      const color = colors[ci % colors.length]; ci++;
+      this.bossBullets.push({ x: ox, y: oy, vx, vy, r: glow ? 5 : 4, color, glow, dead: false });
+    };
 
     if (pat.type === "aimed") {
       const ang = Math.atan2(this.player.y - oy, this.player.x - ox);
@@ -847,11 +857,16 @@ if (this.endless) {
     // 六芒星特殊道具
     this._renderStars(ctx);
 
-    // Boss 子弹
+    // Boss 子弹（大招弹幕带白色描边高亮，一眼区分于常规弹幕）
     for (const b of this.bossBullets) {
       ctx.fillStyle = b.color;
-      ctx.shadowColor = b.color; ctx.shadowBlur = 6;
+      ctx.shadowColor = b.glow ? "#ffffff" : b.color;
+      ctx.shadowBlur = b.glow ? 12 : 6;
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+      if (b.glow) {
+        ctx.lineWidth = 1; ctx.strokeStyle = "rgba(255,255,255,0.85)";
+        ctx.stroke();
+      }
     }
     ctx.shadowBlur = 0;
 

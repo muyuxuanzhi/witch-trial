@@ -35,6 +35,8 @@ export const BOSSES = [
     ultimate: {
       name: "符卡「孢子曼陀罗」",
       duration: 8,
+      // 大招专属高亮配色（区别于常规弹幕的单色，营造"这是大招"的视觉冲击）
+      colors: ["#ff5c8a", "#ffe45c", "#ffffff"],
       loop: [
         { type: "ringGap", count: 18, interval: 1.1, bulletSpeed: 76, gapDeg: 62, gapRotate: 0.9 },
         { type: "ringGap", count: 18, interval: 1.1, bulletSpeed: 82, gapDeg: 62, gapRotate: -0.9 },
@@ -64,6 +66,7 @@ export const BOSSES = [
     ultimate: {
       name: "符卡「荆棘缠缚」",
       duration: 8.5,
+      colors: ["#5cff9a", "#5cffe0", "#ffffff"],
       loop: [
         { type: "crossSpiral", count: 4, interval: 0.5, bulletSpeed: 86 },
         { type: "wave", count: 6, interval: 0.9, bulletSpeed: 90, spreadDeg: 100 },
@@ -92,6 +95,7 @@ export const BOSSES = [
     ultimate: {
       name: "符卡「棱晶审判」",
       duration: 9,
+      colors: ["#5cc8ff", "#c85cff", "#ffffff"],
       loop: [
         { type: "ring", count: 14, interval: 1.3, bulletSpeed: 74 },
         { type: "ringGap", count: 24, interval: 1.0, bulletSpeed: 92, gapDeg: 48, gapRotate: 1.1 },
@@ -120,6 +124,7 @@ export const BOSSES = [
     ultimate: {
       name: "符卡「幽冥回廊」",
       duration: 9.5,
+      colors: ["#b96bff", "#ff5cf0", "#ffffff"],
       loop: [
         { type: "crossSpiral", count: 5, interval: 0.4, bulletSpeed: 96 },
         { type: "ringGap", count: 20, interval: 1.0, bulletSpeed: 88, gapDeg: 50, gapRotate: -1.0 },
@@ -149,6 +154,7 @@ export const BOSSES = [
     ultimate: {
       name: "符卡「月蚀・终焉之环」",
       duration: 10,
+      colors: ["#ffcf5c", "#ff5c5c", "#ffffff"],
       loop: [
         { type: "ringGap", count: 26, interval: 0.9, bulletSpeed: 96, gapDeg: 44, gapRotate: 1.2 },
         { type: "ringGap", count: 26, interval: 0.9, bulletSpeed: 100, gapDeg: 44, gapRotate: -1.2 },
