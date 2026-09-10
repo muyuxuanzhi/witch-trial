@@ -51,6 +51,9 @@ export class BossScene extends Scene {
       speed: 210,
  invuln: 0,
       fireCd: 0,
+      // 东方式判定点：真实受弹半径远小于角色贴图（贴图只是"外观"，
+      // 只有中心这个高亮小圆点才会真正碰到弹幕），躲弹更精确、更爽快。
+      hitR: 3,
     };
     // ===== Buff 属性叠加进 Boss 战（无限模式下随轮次不断变强）=====
     const B = (carry && carry.buffs) || {};
@@ -126,6 +129,17 @@ export class BossScene extends Scene {
     this.hellStarOnce = !!this.diff.bossLifeMode;
     this.hellStarSpawned = false;      // 是否已生成过那唯一一次
     this.hellStarHpRatio = 0.46 + Math.random() * 0.08; // 46%~54%，即"半血左右"
+
+    // ===== 地狱难度：Boss 半血"大招"符卡（参考东方 Project 符卡系统）=====
+    // 血量掉到约 50% 时触发一次：暂停常规弹幕，改为播放编排好的多段攻击循环，
+    // 并在屏幕上展示符卡名，持续一段时间后自动结束、恢复常规攻击。
+    this.ultimate = (this.diff.id === "hell" && this.boss.ultimate) ? this.boss.ultimate : null;
+    this.ultimateTriggered = false;
+    this.ultimateActive = false;
+    this.ultimateT = 0;
+    this.ultimateHpRatio = 0.5;
+    this.ultimateLoopTimers = this.ultimate ? this.ultimate.loop.map(() => 0) : [];
+    this.ultimateNameT = 0;   // 符卡名横幅淡入淡出计时
 
     this.state = "fight";// fight | win | lose | paused
     this.t = 0;
@@ -229,8 +243,12 @@ export class BossScene extends Scene {
     // ===== Boss移动 =====
     this._updateBoss(dt);
 
-    // ===== Boss 弹幕生成 =====
-    this._updatePatterns(dt);
+    // ===== Boss 大招符卡：血量掉到约半血时触发一次（仅地狱难度）=====
+    this._updateUltimateTrigger();
+
+    // ===== Boss 弹幕生成：大招进行中改为播放符卡循环，否则走常规弹幕 =====
+    if (this.ultimateActive) this._updateUltimatePatterns(dt);
+    else this._updatePatterns(dt);
 
     // ===== 子弹推进与碰撞 =====
     this._updateBullets(dt, false);
@@ -450,6 +468,40 @@ export class BossScene extends Scene {
     this.bx = (this.game.width - 70) + Math.sin(this.t * 1.5) * 6;
   }
 
+  // 触发判定：Boss 血量降到约 50% 时，整局只触发一次大招符卡
+  _updateUltimateTrigger() {
+    if (!this.ultimate || this.ultimateTriggered) return;
+    if (this.bhp > 0 && this.bhp <= this.bMaxHp * this.ultimateHpRatio) {
+      this.ultimateTriggered = true;
+      this.ultimateActive = true;
+      this.ultimateT = 0;
+      this.ultimateLoopTimers = this.ultimate.loop.map(() => 0);
+      this.ultimateNameT = 3; // 符卡名横幅展示 3 秒
+      audio.play("rareStar");
+      this.particles.burst(this.bx, this.by, this.boss.color, 40, { speed: 200, life: 0.8, size: 3 });
+    }
+  }
+
+  // 大招符卡进行中：按编排好的循环节奏播放多段攻击，时间到自动结束、恢复常规弹幕
+  _updateUltimatePatterns(dt) {
+    this.ultimateT += dt;
+    const loop = this.ultimate.loop;
+    for (let i = 0; i < loop.length; i++) {
+      const pat = loop[i];
+      this.ultimateLoopTimers[i] += dt;
+      if (this.ultimateLoopTimers[i] >= pat.interval) {
+        this.ultimateLoopTimers[i] = 0;
+        this._emitPattern(pat);
+      }
+    }
+    if (this.ultimateNameT > 0) this.ultimateNameT -= dt;
+    if (this.ultimateT >= this.ultimate.duration) {
+      this.ultimateActive = false;
+      // 大招结束后重置常规弹幕计时，避免恢复瞬间叠加一次额外攻击
+      this.patTimers = this.patterns.map(() => 0);
+    }
+  }
+
   _updatePatterns(dt) {
     const patterns = this.patterns;
     for (let i = 0; i < patterns.length; i++) {
@@ -573,12 +625,15 @@ export class BossScene extends Scene {
       b.x += b.vx * dt; b.y += b.vy * dt;
       if (b.x < -10 || b.x > W + 10 || b.y < -10 || b.y > H + 10) b.dead = true;
     }
-    // Boss 子弹 vs 玩家
+    // Boss 子弹 vs 玩家：东方式判定，只用玩家中心的高亮小圆点(hitR)做圆形碰撞，
+    // 远小于角色贴图视觉范围，躲弹判定更精确（贴图只是外观，不代表真实受弹范围）。
     if (!endMode && this.state === "fight") {
       const p = this.player;
       for (const b of this.bossBullets) {
         if (b.dead) continue;
-        if (Math.abs(b.x - p.x) < (p.w / 2 + b.r) && Math.abs(b.y - p.y) < (p.h / 2 + b.r)) {
+        const dx = b.x - p.x, dy = b.y - p.y;
+        const rr = p.hitR + b.r * 0.5; // 子弹判定也只取一半视觉半径，避免"看起来没碰到却扣血"
+        if (dx * dx + dy * dy < rr * rr) {
           b.dead = true;
           if (p.invuln <= 0) {
             p.hp -= PLAYER_HIT_DMG;
@@ -817,6 +872,8 @@ if (this.endless) {
 
     // HUD
     this._renderHUD(ctx, W, H);
+    // 大招符卡名横幅 / 进行中提示
+    this._renderUltimateBanner(ctx, W, H);
 
     if (this.state === "paused") this._renderPause(ctx, W, H);
     if (this.state === "win") this._renderWin(ctx, W, H);
@@ -969,6 +1026,7 @@ if (this.endless) {
         const drawH = 30;
         const drawW = (sprite.width / sprite.height) * drawH;
         ctx.drawImage(sprite, -drawW / 2, 12 - drawH, drawW, drawH);
+        this._renderHitDot(ctx);
         ctx.restore();
         return;
       }
@@ -984,6 +1042,24 @@ if (this.endless) {
     ctx.strokeStyle = this.weapon.color; ctx.lineWidth = 1;
     ctx.fillRect(-6, 0, 12, 12);
     ctx.strokeRect(-6.5, 0.5, 13, 12);
+    ctx.shadowBlur = 0;
+    this._renderHitDot(ctx);
+    ctx.restore();
+  }
+
+  // 东方式判定点：白色光晕 + 亮色实心圆点，标出玩家真实受弹范围（半径 hitR），
+  // 贴图/立绘只是外观装饰，真正的碰撞判定只在这个点上——躲弹更精确、也更"好看得懂"。
+  _renderHitDot(ctx) {
+    const r = this.player.hitR;
+    ctx.save();
+    ctx.shadowColor = "#ffffff"; ctx.shadowBlur = 9;
+    ctx.fillStyle = "rgba(255,255,255,0.55)";
+    ctx.beginPath(); ctx.arc(0, 0, r + 2, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 4;
+    ctx.fillStyle = "#ff3860";
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.4, 0, Math.PI * 2); ctx.fill();
     ctx.shadowBlur = 0;
     ctx.restore();
   }
@@ -1061,6 +1137,42 @@ if (this.endless) {
     ctx.fillRect(pb.x + 5, pb.y + 4, 3, 8); ctx.fillRect(pb.x + 10, pb.y + 4, 3, 8);
 
     ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  }
+
+  // 大招符卡展示：触发瞬间居中弹出符卡名（淡入-停留-淡出），
+  // 大招持续期间在顶部常驻一条小提示，呼应东方 Project 的"符卡宣告"演出。
+  _renderUltimateBanner(ctx, W, H) {
+    if (!this.ultimate) return;
+    if (this.ultimateActive) {
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.font = "10px 'Microsoft YaHei', 'PingFang SC', sans-serif";
+      ctx.fillStyle = this.boss.color;
+      ctx.shadowColor = this.boss.color; ctx.shadowBlur = 6;
+      ctx.fillText("★ 符卡发动中", W / 2, 16);
+      ctx.shadowBlur = 0;
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    }
+    if (this.ultimateNameT > 0) {
+      // 0~0.5s 淡入，中段停留，最后 0.6s 淡出
+      let alpha = 1;
+      if (this.ultimateNameT > 2.5) alpha = Math.max(0, 1 - (this.ultimateNameT - 2.5) / 0.5);
+      else if (this.ultimateNameT < 0.6) alpha = this.ultimateNameT / 0.6;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const by = H * 0.4;
+      ctx.fillStyle = "rgba(10,4,16,0.55)";
+      ctx.fillRect(0, by - 14, W, 28);
+      ctx.strokeStyle = this.boss.color; ctx.lineWidth = 1;
+      ctx.strokeRect(0.5, by - 13.5, W - 1, 27);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = "bold 15px 'Microsoft YaHei', 'PingFang SC', sans-serif";
+      ctx.fillStyle = this.boss.color;
+      ctx.shadowColor = this.boss.color; ctx.shadowBlur = 10;
+      ctx.fillText(this.ultimate.name, W / 2, by);
+      ctx.shadowBlur = 0;
+      ctx.restore();
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    }
   }
 
   _renderPause(ctx, W, H) {
