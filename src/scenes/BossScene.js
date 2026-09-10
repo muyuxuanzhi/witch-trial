@@ -102,8 +102,14 @@ export class BossScene extends Scene {
     this.bDir = 1;
     this.bTeleT = 0;
     this.spiralAng = 0;
+    // 弹幕 pattern 列表：地狱难度额外追加一道 Boss 专属"符卡"式弹幕
+    // （环形缺口/双臂交织螺旋等有明确规律、可读可练的攻击，而不是单纯把普通弹幕调快调密）
+    this.patterns = this.boss.patterns.slice();
+    if (this.diff.id === "hell" && this.boss.hellPattern) {
+      this.patterns.push(this.boss.hellPattern);
+    }
     // 每个 pattern 独立计时器
-    this.patTimers = this.boss.patterns.map(() => 0);
+    this.patTimers = this.patterns.map(() => 0);
 
     this.playerBullets = [];
     this.bossBullets = [];
@@ -114,10 +120,12 @@ export class BossScene extends Scene {
     this.starInterval = Math.max(2.2, 4.5 - (this.starLuck || 0) * 0.4);   // 幸运越高越勤
     this.starCollected = 0;    // 已收集数量
     this.powerT = 0;           // 六芒星增益（火力狂暴）剩余时间
-    // 地狱难度：六芒星出现频率大幅降低——整局只出现一次
+    // 地狱难度：六芒星出现频率大幅降低——整局只出现一次，
+    // 且触发时机改为"Boss 血量掉到半血左右"（而非固定时间），命中战斗节奏更合理，
+    // 也让"半血无敌"成为一次有战术意义的救场机会。
     this.hellStarOnce = !!this.diff.bossLifeMode;
     this.hellStarSpawned = false;      // 是否已生成过那唯一一次
-    this.hellStarDelay = 8+ Math.random() * 6; // 战斗开始 8~14s 后出现
+    this.hellStarHpRatio = 0.46 + Math.random() * 0.08; // 46%~54%，即"半血左右"
 
     this.state = "fight";// fight | win | lose | paused
     this.t = 0;
@@ -237,15 +245,13 @@ export class BossScene extends Scene {
   _updateStars(dt) {
     const W = this.game.width, H = this.game.height;
     // 生成逻辑：
-    // - 地狱难度：整局只出现一次（延迟一段时间后生成，之后不再生成）
+    // - 地狱难度：整局只出现一次，在 Boss 血量掉到半血左右（hellStarHpRatio）时触发，
+    //   而不是固定时间——契合"打到一半给一次无敌喘息"的设计意图
     // - 普通难度：按 starInterval 周期性生成
     if (this.hellStarOnce) {
-      if (!this.hellStarSpawned) {
-        this.starSpawnT += dt;
-        if (this.starSpawnT >= this.hellStarDelay) {
-          this.hellStarSpawned = true;
-          this._spawnStar();
-        }
+      if (!this.hellStarSpawned && this.bhp > 0 && this.bhp <= this.bMaxHp * this.hellStarHpRatio) {
+        this.hellStarSpawned = true;
+        this._spawnStar();
       }
     } else {
       this.starSpawnT += dt;
@@ -445,7 +451,7 @@ export class BossScene extends Scene {
   }
 
   _updatePatterns(dt) {
-    const patterns = this.boss.patterns;
+    const patterns = this.patterns;
     for (let i = 0; i < patterns.length; i++) {
       const pat = patterns[i];
       this.patTimers[i] += dt;
@@ -497,6 +503,30 @@ export class BossScene extends Scene {
       for (let i = 0; i < n; i++) {
         const a = this.spiralAng + (i / n) * Math.PI * 2;
         push(Math.cos(a) * spd, Math.sin(a) * spd);
+      }
+      this.spiralAng += 0.5;
+    } else if (pat.type === "ringGap") {
+      // 东方式"符卡"：环形弹幕带一道缺口，缺口位置每次发射都旋转一点，
+      // 玩家需要持续追踪缺口走位才能穿过——有明确规律、可读可练，比单纯堆弹幕量更有逻辑。
+      const n = pat.count;
+      const gap = ((pat.gapDeg || 55) * Math.PI) / 180;
+      this._ringGapAng = (this._ringGapAng || 0) + (pat.gapRotate || 0.5);
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        let da = a - this._ringGapAng;
+        da = ((da % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+        if (da < gap) continue; // 缺口扇区不发弹
+        push(Math.cos(a) * spd, Math.sin(a) * spd);
+      }
+    } else if (pat.type === "crossSpiral") {
+      // 东方式"符卡"：双臂反向旋转螺旋交织成花瓣状弹幕网，密度更高但左右对称、规律清晰，
+      // 玩家可通过观察两组弹道的交叉节奏找到穿行时机。
+      const n = pat.count;
+      for (let i = 0; i < n; i++) {
+        const a1 = this.spiralAng + (i / n) * Math.PI * 2;
+        const a2 = -this.spiralAng + (i / n) * Math.PI * 2 + Math.PI / n;
+        push(Math.cos(a1) * spd, Math.sin(a1) * spd);
+        push(Math.cos(a2) * spd, Math.sin(a2) * spd);
       }
       this.spiralAng += 0.5;
     }

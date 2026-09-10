@@ -18,6 +18,9 @@ export const BOSSES = [
       { type: "spread", count: 3, interval: 1.4, bulletSpeed: 90, spreadDeg: 50 },
       { type: "aimed", count: 1, interval: 1.0, bulletSpeed: 120 },
     ],
+    // 地狱难度专属"符卡"：环形孢子云，中间留一道缺口且缺口持续旋转，
+    // 需要玩家追着缺口走位躲避——有明确规律、可读可练，而非单纯堆弹幕量。
+    hellPattern: { type: "ringGap", count: 16, interval: 2.2, bulletSpeed: 92, gapDeg: 58, gapRotate: 0.46 },
     desc: "喷吐孢子弹幕的森林之敌。",
   },
   {
@@ -33,6 +36,9 @@ export const BOSSES = [
       { type: "wave", count: 4, interval: 1.5, bulletSpeed: 80, spreadDeg: 80 },
       { type: "aimed", count: 1, interval: 0.95, bulletSpeed: 110 },
     ],
+    // 地狱难度专属"符卡"：双臂反向旋转螺旋，交织成藤蔓缠绕状的"花瓣"弹幕，
+    // 密度比单臂螺旋更高，但两臂对称可读，走位规律清晰。
+    hellPattern: { type: "crossSpiral", count: 3, interval: 0.85, bulletSpeed: 84 },
     desc: "挥舞藤蔓、缠绕射击的毒沼之主。",
   },
   {
@@ -48,6 +54,8 @@ export const BOSSES = [
       { type: "ring", count: 8, interval: 2.0, bulletSpeed: 80 },
       { type: "aimed", count: 2, interval: 0.95, bulletSpeed: 125 },
     ],
+    // 地狱难度专属"符卡"：更密的水晶碎片环＋旋转缺口，缺口转速比森林关更快。
+    hellPattern: { type: "ringGap", count: 20, interval: 2.4, bulletSpeed: 96, gapDeg: 52, gapRotate: 0.6 },
     desc: "以水晶碎片轰击的洞窟守卫。",
   },
   {
@@ -63,6 +71,8 @@ export const BOSSES = [
       { type: "spiral", count: 2, interval: 0.32, bulletSpeed: 88 },
       { type: "aimed", count: 2, interval: 0.95, bulletSpeed: 135 },
     ],
+    // 地狱难度专属"符卡"：双臂交织螺旋叠加瞬移位移，编织出更难读的鬼影弹幕网。
+    hellPattern: { type: "crossSpiral", count: 4, interval: 0.7, bulletSpeed: 92 },
     desc: "瞬移穿梭、螺旋弹幕的城堡之主。",
   },
   {
@@ -79,6 +89,8 @@ export const BOSSES = [
       { type: "spiral", count: 3, interval: 0.3, bulletSpeed: 90 },
       { type: "aimed", count: 2, interval: 0.95, bulletSpeed: 140 },
     ],
+    // 最终Boss 地狱专属"符卡"：缺口更窄、旋转更快的月蚀弹幕环，全关卡最难的一道符卡。
+    hellPattern: { type: "ringGap", count: 22, interval: 2.1, bulletSpeed: 100, gapDeg: 46, gapRotate: 0.7 },
     desc: "掌控月蚀之力的最终宿敌。",
   },
 ];
